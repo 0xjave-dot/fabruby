@@ -33,15 +33,24 @@ export default function EditProfile() {
     try {
       if (firebaseUser) {
         await updateUserDoc(firebaseUser.uid, { name, email, phone, dob, gender, avatarUrl });
-        if (auth.currentUser) {
+      }
+
+      setUserProfile({ name, email, phone, dob, gender, avatarUrl });
+
+      if (auth.currentUser) {
+        try {
           await updateProfile(auth.currentUser, {
             displayName: name,
             photoURL: avatarUrl || null,
           });
+        } catch (profileErr) {
+          console.warn("Auth profile sync failed:", profileErr);
+          pushToast("Profile saved. Auth sync will retry later.");
+          navigate(-1);
+          return;
         }
       }
 
-      setUserProfile({ name, email, phone, dob, gender, avatarUrl });
       pushToast("Profile updated successfully.");
       navigate(-1);
     } catch (err) {

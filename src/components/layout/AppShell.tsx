@@ -2,8 +2,8 @@ import { useEffect, useMemo, type ReactNode, type CSSProperties } from "react";
 import { useLocation, Outlet, useNavigate } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { useCart } from "../../context/CartContext";
-import { Search } from "lucide-react";
-import { buildDailyTheme } from "../../lib/colorTheme";
+import { ArrowRight, Search } from "lucide-react";
+import { buildDailyTheme, rgbaFromHex } from "../../lib/colorTheme";
 import { getTodaysColorEntry } from "../../data/colorOfTheDay";
 import { WhatsAppFloatingButton } from "../common/WhatsAppFloatingButton";
 
@@ -58,8 +58,43 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="min-h-screen w-full font-sans antialiased text-[#202020]" style={shellStyle}>
       <div className="relative w-full min-h-screen mx-auto bg-white flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.03)] border-x-0 transition-all md:max-w-[1440px] md:min-h-[calc(100vh-24px)] md:my-3 md:rounded-[30px] md:overflow-hidden md:border md:border-black/5">
+        <div
+          className="flex items-center justify-between gap-3 border-b border-black/5 px-4 sm:px-6 py-2.5 md:py-3"
+          style={{
+            background: `linear-gradient(135deg, ${theme.accentLighter} 0%, #ffffff 72%)`,
+          }}
+        >
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{
+                backgroundColor: theme.accent,
+                boxShadow: `0 0 0 6px ${rgbaFromHex(theme.accent, 0.12)}`,
+              }}
+            />
+            <div className="min-w-0">
+              <div className="font-display text-[10px] font-black uppercase tracking-[0.24em] text-[#666]">
+                Today&apos;s Color
+              </div>
+              <div className="truncate font-display text-[14px] font-extrabold text-dark">
+                {todayEntry.color}
+              </div>
+            </div>
+          </div>
 
-        
+          <div className="hidden items-center gap-2 sm:flex">
+            <span className="font-display text-[10px] font-black uppercase tracking-[0.24em]" style={{ color: theme.accent }}>
+              Shop the shade
+            </span>
+            <span
+              className="flex h-7 w-7 items-center justify-center rounded-full border border-white/70 bg-white/70 shadow-sm"
+              style={{ color: theme.accent }}
+            >
+              <ArrowRight className="h-4 w-4" />
+            </span>
+          </div>
+        </div>
+
         {/* Desktop/Tablet Header Navigation Bar */}
         <header className="hidden md:flex items-center justify-between px-6 lg:px-8 py-4 border-b border-[#e5e5e5] bg-white/95 backdrop-blur-xl sticky top-0 z-50 select-none">
           <div className="flex items-center gap-2 cursor-pointer select-none" onClick={() => navigate("/")}>

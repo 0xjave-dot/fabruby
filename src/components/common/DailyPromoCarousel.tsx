@@ -50,7 +50,7 @@ export function DailyPromoCarousel() {
 
   return (
     <div
-      className="relative overflow-hidden rounded-[24px] min-h-[220px] sm:min-h-[250px] cursor-pointer select-none"
+      className="relative overflow-hidden rounded-[24px] min-h-[220px] sm:min-h-[250px] cursor-pointer select-none border border-black/5"
       style={{
         background: theme.shellBackground,
         boxShadow: `0 14px 34px ${rgbaFromHex(todayEntry.hex, 0.14)}`,
@@ -58,6 +58,12 @@ export function DailyPromoCarousel() {
       onClick={() => navigate(`/product/${current.id}`)}
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.55)_0%,_transparent_42%)] pointer-events-none" />
+      <div
+        className="absolute inset-y-0 left-0 w-2/5 pointer-events-none"
+        style={{
+          background: `linear-gradient(90deg, ${rgbaFromHex(todayEntry.hex, 0.24)} 0%, rgba(255,255,255,0) 100%)`,
+        }}
+      />
       <div
         className="absolute -right-8 bottom-[-28px] h-40 w-40 rounded-full blur-2xl pointer-events-none"
         style={{ backgroundColor: rgbaFromHex(todayEntry.hex, 0.22) }}
@@ -75,11 +81,19 @@ export function DailyPromoCarousel() {
         <div className="absolute inset-0 ring-1 ring-white/20" />
         <div className="absolute left-4 top-4 sm:left-5 sm:top-5">
           <span
-            className="inline-flex items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-white"
+            className="inline-flex items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-white shadow-[0_10px_22px_rgba(0,0,0,0.16)]"
             style={{ backgroundColor: todayEntry.hex }}
           >
             Today's Color: {todayEntry.color}
           </span>
+        </div>
+        <div className="absolute bottom-4 left-4 max-w-[72%] rounded-[18px] bg-white/78 px-4 py-3 backdrop-blur-md border border-white/60 shadow-[0_10px_24px_rgba(0,0,0,0.08)]">
+          <p className="font-display text-[10px] font-black uppercase tracking-[0.24em] text-gray2">
+            Featured shade
+          </p>
+          <p className="mt-1 font-display text-[18px] font-black uppercase tracking-tight text-dark leading-none">
+            Wear {todayEntry.color}
+          </p>
         </div>
       </div>
     </div>

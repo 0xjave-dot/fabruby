@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
 
 export interface FirestoreUserProfile {
@@ -46,5 +46,9 @@ export async function getUserDoc(uid: string): Promise<FirestoreUserProfile | nu
 /** Patch specific fields in a user doc */
 export async function updateUserDoc(uid: string, data: Partial<FirestoreUserProfile>): Promise<void> {
   const ref = doc(db, 'users', uid);
-  await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
+  await setDoc(
+    ref,
+    { ...data, updatedAt: serverTimestamp() },
+    { merge: true }
+  );
 }
