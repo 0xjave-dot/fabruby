@@ -27,7 +27,7 @@ export function TodayColorSection() {
   const cleanHex = todayEntry.hex.replace("#", "");
 
   const handleSeeAll = () => {
-    navigate(`/all?color=${cleanHex}&type=dress,two-piece`);
+    navigate(`/all?color=${cleanHex}`);
   };
 
   return (
@@ -50,7 +50,7 @@ export function TodayColorSection() {
           }}
         >
           <span className="h-2 w-2 rounded-full" style={{ backgroundColor: todayEntry.hex }} />
-          Live shade
+          
         </span>
       </div>
 

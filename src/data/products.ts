@@ -833,4 +833,20 @@ const approvedProducts = products.filter((p) => {
 products.length = 0;
 products.push(...approvedProducts);
 
+const normalizePreviewImages = (images: string[]) => {
+  if (images.length === 0) {
+    return [];
+  }
+
+  if (images.length >= 4) {
+    return images.slice(0, 4);
+  }
+
+  return Array.from({ length: 4 }, (_, index) => images[index % images.length]);
+};
+
+products.forEach((product) => {
+  product.images = normalizePreviewImages(product.images);
+});
+
 

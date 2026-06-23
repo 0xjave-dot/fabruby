@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Heart, ShoppingBag, Star, Share2, Plus, Minus } from "lucide-react";
+import { Heart, ShoppingBag, Star, Share2, Plus, Minus, X, ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BackButton } from "../../components/layout/BackButton";
 import { products } from "../../data/products";
@@ -49,8 +49,15 @@ export default function ProductDetail() {
   });
 
   const [quantity, setQuantity] = useState(1);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
 
   const isLiked = product ? isInWishlist(product.id) : false;
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+    setIsImageViewerOpen(false);
+  }, [id]);
 
   if (!product) {
     return (
@@ -98,6 +105,17 @@ export default function ProductDetail() {
     }
   };
 
+  const galleryImages = product.images.length > 0 ? product.images : [product.images[0]];
+  const activeImage = galleryImages[activeImageIndex] ?? galleryImages[0];
+  const openImageViewer = () => setIsImageViewerOpen(true);
+  const closeImageViewer = () => setIsImageViewerOpen(false);
+  const stepImage = (direction: 1 | -1) => {
+    setActiveImageIndex((current) => {
+      const next = (current + direction + galleryImages.length) % galleryImages.length;
+      return next;
+    });
+  };
+
   return (
     <div className="flex-1 flex flex-col bg-white animate-fade-up-enter min-h-screen relative pb-[86px]">
       {/* Product Header */}
@@ -132,17 +150,49 @@ export default function ProductDetail() {
       ) : (
         <div className="flex flex-col md:flex-row md:items-start md:gap-8 p-5">
           {/* Main image gallery card */}
-          <div className="w-full md:w-[45%] aspect-[4/5] md:aspect-square bg-gray flex items-center justify-center max-h-[360px] md:max-h-[500px] overflow-hidden relative border border-black/5 md:rounded-2xl shadow-subtle flex-shrink-0">
-            <img
-              src={product.images[0]}
-              alt={product.name}
-              className="w-full h-full object-cover transition-transform duration-300 rounded-b-md md:rounded-2xl"
-            />
-            {product.compareAtPrice && product.compareAtPrice > product.price && (
-              <div className="absolute top-4 left-4 bg-gradient-to-l from-pink to-red text-white font-display text-[11px] font-bold px-3 py-1 rounded-md shadow-md">
-                Sale Offer
-              </div>
-            )}
+          <div className="w-full md:w-[45%] space-y-3 flex-shrink-0">
+            <div className="group relative aspect-[4/5] md:aspect-square bg-gray flex items-center justify-center max-h-[360px] md:max-h-[500px] overflow-hidden border border-black/5 md:rounded-2xl shadow-subtle cursor-zoom-in">
+              <button
+                type="button"
+                onClick={openImageViewer}
+                className="absolute right-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white backdrop-blur-md opacity-90 transition group-hover:opacity-100"
+              >
+                <ZoomIn className="h-3.5 w-3.5" />
+                View image
+              </button>
+              <img
+                src={activeImage}
+                alt={product.name}
+                className="w-full h-full object-cover transition-transform duration-300 rounded-b-md md:rounded-2xl"
+                onClick={openImageViewer}
+              />
+              {product.compareAtPrice && product.compareAtPrice > product.price && (
+                <div className="absolute top-4 left-4 bg-gradient-to-l from-pink to-red text-white font-display text-[11px] font-bold px-3 py-1 rounded-md shadow-md">
+                  Sale Offer
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-4 gap-2.5">
+              {galleryImages.map((image, index) => (
+                <button
+                  key={`${product.id}-thumb-${index}`}
+                  type="button"
+                  onClick={() => setActiveImageIndex(index)}
+                  className={`relative aspect-square overflow-hidden rounded-[14px] border transition-all cursor-pointer ${
+                    activeImageIndex === index
+                      ? "border-blue ring-2 ring-blue/15"
+                      : "border-black/5 hover:border-blue/25"
+                  }`}
+                >
+                  <img
+                    src={image}
+                    alt={`${product.name} view ${index + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Info & selectors column */}
@@ -296,6 +346,74 @@ export default function ProductDetail() {
           {(product.price * quantity).toFixed(2)}
         </button>
       </div>
+
+      {isImageViewerOpen && (
+        <div
+          className="fixed inset-0 z-[220] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={closeImageViewer}
+        >
+          <div
+            className="relative w-full max-w-5xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={closeImageViewer}
+              className="absolute -top-12 right-0 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20"
+              aria-label="Close image viewer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-black shadow-2xl">
+              <button
+                type="button"
+                onClick={() => stepImage(-1)}
+                className="absolute left-3 top-1/2 z-10 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => stepImage(1)}
+                className="absolute right-3 top-1/2 z-10 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20"
+                aria-label="Next image"
+              >
+                <ChevronRight className="h-6 w-6" />
+              </button>
+
+              <img
+                src={activeImage}
+                alt={product.name}
+                className="max-h-[80vh] w-full object-contain bg-black/70"
+              />
+            </div>
+
+            <div className="mt-4 grid grid-cols-4 gap-2.5 sm:gap-3">
+              {galleryImages.map((image, index) => (
+                <button
+                  key={`viewer-thumb-${product.id}-${index}`}
+                  type="button"
+                  onClick={() => setActiveImageIndex(index)}
+                  className={`relative aspect-square overflow-hidden rounded-[16px] border transition-all cursor-pointer ${
+                    activeImageIndex === index
+                      ? "border-white ring-2 ring-white/40"
+                      : "border-white/15 hover:border-white/40"
+                  }`}
+                >
+                  <img
+                    src={image}
+                    alt={`${product.name} preview ${index + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

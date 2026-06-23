@@ -1,4 +1,4 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Voucher, vouchers } from "../data/vouchers";
 import { useSettings } from "./SettingsContext";
@@ -39,20 +39,132 @@ function updateCartDoc(current: UserCartDoc, next: Partial<UserCartDoc>) {
   };
 }
 
-export function CartProvider({ children }: { children: ReactNode }) {
-  const { account, updateAccount } = useSettings();
-  const cart = account.cart;
+const GUEST_CART_STORAGE_KEY = "fabruby.guestCart";
 
-  const items = cart.items;
-  const appliedVoucher = cart.appliedVoucherCode
-    ? vouchers.find((voucher) => voucher.code.toUpperCase() === cart.appliedVoucherCode?.toUpperCase()) ?? null
+function loadGuestCart(): UserCartDoc {
+  if (typeof window === "undefined") {
+    return { items: [], appliedVoucherCode: null };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(GUEST_CART_STORAGE_KEY);
+    if (!raw) {
+      return { items: [], appliedVoucherCode: null };
+    }
+
+    const parsed = JSON.parse(raw) as Partial<UserCartDoc>;
+    return {
+      items: Array.isArray(parsed.items) ? parsed.items.map((item) => ({ ...item })) : [],
+      appliedVoucherCode: parsed.appliedVoucherCode ?? null,
+    };
+  } catch {
+    return { items: [], appliedVoucherCode: null };
+  }
+}
+
+function saveGuestCart(cart: UserCartDoc) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(GUEST_CART_STORAGE_KEY, JSON.stringify(cart));
+}
+
+function clearGuestCart() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(GUEST_CART_STORAGE_KEY);
+}
+
+function mergeCartItems(baseItems: UserCartDoc["items"], incomingItems: UserCartDoc["items"]) {
+  const merged = [...baseItems.map((item) => ({ ...item }))];
+
+  for (const incoming of incomingItems) {
+    const index = merged.findIndex(
+      (item) =>
+        item.productId === incoming.productId &&
+        item.size === incoming.size &&
+        item.color === incoming.color
+    );
+
+    if (index >= 0) {
+      merged[index] = {
+        ...merged[index],
+        qty: merged[index].qty + incoming.qty,
+      };
+    } else {
+      merged.push({ ...incoming });
+    }
+  }
+
+  return merged;
+}
+
+function mergeCarts(base: UserCartDoc, incoming: UserCartDoc): UserCartDoc {
+  return {
+    items: mergeCartItems(base.items, incoming.items),
+    appliedVoucherCode: base.appliedVoucherCode ?? incoming.appliedVoucherCode,
+  };
+}
+
+export function CartProvider({ children }: { children: ReactNode }) {
+  const { account, updateAccount, firebaseUser, authLoading } = useSettings();
+  const cart = account.cart;
+  const [guestCart, setGuestCart] = useState<UserCartDoc>(() => loadGuestCart());
+  const hydratedUidRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!firebaseUser) {
+      hydratedUidRef.current = null;
+      setGuestCart(loadGuestCart());
+      return;
+    }
+
+    if (authLoading) {
+      return;
+    }
+
+    if (hydratedUidRef.current === firebaseUser.uid) {
+      return;
+    }
+
+    const storedGuestCart = loadGuestCart();
+    const hasGuestItems = storedGuestCart.items.length > 0 || Boolean(storedGuestCart.appliedVoucherCode);
+
+    if (!hasGuestItems) {
+      hydratedUidRef.current = firebaseUser.uid;
+      return;
+    }
+
+    const mergedCart = mergeCarts(cart, storedGuestCart);
+    hydratedUidRef.current = firebaseUser.uid;
+    clearGuestCart();
+    setGuestCart({ items: [], appliedVoucherCode: null });
+    updateAccount({
+      ...account,
+      cart: mergedCart,
+    });
+  }, [account, authLoading, cart, firebaseUser, updateAccount]);
+
+  const activeCart = firebaseUser ? cart : guestCart;
+  const items = activeCart.items;
+  const appliedVoucher = activeCart.appliedVoucherCode
+    ? vouchers.find((voucher) => voucher.code.toUpperCase() === activeCart.appliedVoucherCode?.toUpperCase()) ?? null
     : null;
 
   const persistCart = (next: UserCartDoc) => {
-    updateAccount({
-      ...account,
-      cart: next,
-    });
+    if (firebaseUser) {
+      updateAccount({
+        ...account,
+        cart: next,
+      });
+      return;
+    }
+
+    setGuestCart(next);
+    saveGuestCart(next);
   };
 
   const addItem = (newItem: Omit<CartItem, "qty"> & { qty?: number }) => {
