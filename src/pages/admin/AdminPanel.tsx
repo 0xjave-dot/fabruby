@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import {
   Archive,
   BadgePercent,
+  BarChart3,
   CalendarDays,
   ChevronRight,
   CirclePlus,
@@ -19,7 +20,9 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { collection, onSnapshot } from "firebase/firestore";
 import { useAuth } from "../../lib/auth";
+import { db } from "../../lib/firebase";
 import {
   archiveCatalogCategory,
   archiveCatalogProduct,
@@ -40,8 +43,25 @@ import {
   useReviews,
   useVouchers,
 } from "../../lib/storefrontData";
+import { summarizeOrders, summarizeVisits, type VisitLog } from "../../lib/adminAnalytics";
+import { uploadCategoryImage, uploadProductImages } from "../../lib/adminMedia";
+import type { UserAccountDoc } from "../../lib/userAccount";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
-type AdminTab = "overview" | "products" | "categories" | "vouchers" | "colors" | "reviews";
+type AdminTab = "overview" | "analytics" | "products" | "categories" | "vouchers" | "colors" | "reviews";
 
 type ProductFormState = {
   id: string;
@@ -50,9 +70,11 @@ type ProductFormState = {
   price: string;
   compareAtPrice: string;
   category: string;
-  images: string;
-  colors: string;
-  sizes: string;
+  images: string[];
+  colors: string[];
+  sizes: string[];
+  customColor: string;
+  customSize: string;
   rating: string;
   reviewCount: string;
   tags: string;
@@ -69,6 +91,7 @@ type CategoryFormState = {
   emoji: string;
   image: string;
   active: boolean;
+  customImage: string;
 };
 
 type VoucherFormState = {
@@ -93,12 +116,26 @@ type ColorFormState = {
 
 const tabs: Array<{ id: AdminTab; label: string; icon: typeof LayoutDashboard }> = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "products", label: "Products", icon: Package },
   { id: "categories", label: "Categories", icon: Shapes },
   { id: "vouchers", label: "Vouchers", icon: BadgePercent },
   { id: "colors", label: "Color Drops", icon: Palette },
   { id: "reviews", label: "Reviews", icon: Users },
 ];
+
+const presetSizeOptions = ["XS", "S", "M", "L", "XL", "XXL", "36", "37", "38", "39", "40", "41", "42", "One Size"];
+const presetColorOptions = [
+  { label: "Blush Pink", value: "#ff5790" },
+  { label: "Sage Green", value: "#7a9b76" },
+  { label: "Electric Blue", value: "#004cff" },
+  { label: "Midnight Black", value: "#202020" },
+  { label: "Sunflower Yellow", value: "#ffd54f" },
+  { label: "Coral Red", value: "#ff5252" },
+  { label: "Soft Lilac", value: "#ba68c8" },
+  { label: "Warm White", value: "#f5f5f5" },
+];
+const chartColors = ["#ff5790", "#7a9b76", "#004cff", "#202020", "#ffd54f", "#ff5252", "#ba68c8", "#8c8c8c"];
 
 function toNumber(value: string, fallback = 0) {
   const parsed = Number(value);
@@ -119,6 +156,14 @@ function splitMultiLine(value: string) {
     .filter(Boolean);
 }
 
+function toggleListValue(values: string[], value: string) {
+  return values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
+}
+
+function normalizeColorValue(value: string) {
+  return value.trim();
+}
+
 function productToForm(product?: CatalogProduct): ProductFormState {
   return {
     id: product?.id ?? "",
@@ -127,9 +172,11 @@ function productToForm(product?: CatalogProduct): ProductFormState {
     price: product ? String(product.price) : "",
     compareAtPrice: product?.compareAtPrice ? String(product.compareAtPrice) : "",
     category: product?.category ?? "",
-    images: product?.images?.join("\n") ?? "",
-    colors: product?.colors?.join(", ") ?? "",
-    sizes: product?.sizes?.join(", ") ?? "",
+    images: product?.images ?? [],
+    colors: product?.colors ?? [],
+    sizes: product?.sizes ?? [],
+    customColor: "",
+    customSize: "",
     rating: product?.rating ? String(product.rating) : "4.8",
     reviewCount: product?.reviewCount ? String(product.reviewCount) : "0",
     tags: product?.tags?.join(", ") ?? "",
@@ -148,6 +195,7 @@ function categoryToForm(category?: CatalogCategory): CategoryFormState {
     emoji: category?.emoji ?? "🛍️",
     image: category?.image ?? "",
     active: category?.active !== false,
+    customImage: "",
   };
 }
 
@@ -342,6 +390,9 @@ export default function AdminPanel() {
   const { vouchers, loading: vouchersLoading } = useVouchers();
   const { reviews, loading: reviewsLoading } = useReviews();
   const { schedule, loading: scheduleLoading } = useColorSchedule();
+  const [visitLogs, setVisitLogs] = useState<VisitLog[]>([]);
+  const [managedAccounts, setManagedAccounts] = useState<UserAccountDoc[]>([]);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
 
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [productForm, setProductForm] = useState<ProductFormState>(productToForm());
@@ -401,6 +452,36 @@ export default function AdminPanel() {
     setColorDrafts(schedule.map((entry) => colorEntryToForm(entry)));
   }, [schedule, scheduleDirty, scheduleLoading]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const unsubscribeVisits = onSnapshot(
+      collection(db, "analyticsVisits"),
+      (snapshot) => {
+        setVisitLogs(snapshot.docs.map((entry) => ({ id: entry.id, ...entry.data() } as VisitLog)));
+        setAnalyticsLoading(false);
+      },
+      () => {
+        setAnalyticsLoading(false);
+      },
+    );
+
+    const unsubscribeUsers = onSnapshot(
+      collection(db, "users"),
+      (snapshot) => {
+        setManagedAccounts(snapshot.docs.map((entry) => entry.data() as UserAccountDoc));
+      },
+      () => {
+        setManagedAccounts([]);
+      },
+    );
+
+    return () => {
+      unsubscribeVisits();
+      unsubscribeUsers();
+    };
+  }, [user]);
+
   const stats = useMemo(
     () => [
       { label: "Products", value: String(products.length), icon: Package },
@@ -411,6 +492,9 @@ export default function AdminPanel() {
     ],
     [categories.length, products.length, reviews.length, schedule.length, vouchers.length],
   );
+
+  const visitSummary = useMemo(() => summarizeVisits(visitLogs), [visitLogs]);
+  const orderSummary = useMemo(() => summarizeOrders(managedAccounts), [managedAccounts]);
 
   const selectedProduct = products.find((item) => item.id === selectedProductId) ?? null;
   const selectedCategory = categories.find((item) => item.slug === selectedCategorySlug) ?? null;
@@ -455,6 +539,49 @@ export default function AdminPanel() {
     setVoucherForm(voucherToForm());
   };
 
+  const handleProductImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const { files } = event.target;
+    if (!files?.length) return;
+
+    const productKey = productForm.id.trim() || productForm.name.trim() || "product";
+    const urls = await uploadProductImages(productKey, Array.from(files));
+    setProductForm((current) => ({ ...current, images: [...current.images, ...urls] }));
+    event.target.value = "";
+  };
+
+  const handleCategoryImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const { files } = event.target;
+    if (!files?.length) return;
+
+    const file = files.item(0);
+    if (file) {
+      const categoryKey = categoryForm.slug.trim() || categoryForm.name.trim() || "category";
+      const url = await uploadCategoryImage(categoryKey, file);
+      setCategoryForm((current) => ({ ...current, image: url }));
+    }
+    event.target.value = "";
+  };
+
+  const addCustomSize = () => {
+    const next = normalizeColorValue(productForm.customSize);
+    if (!next) return;
+    setProductForm((current) => ({
+      ...current,
+      sizes: toggleListValue(current.sizes, next),
+      customSize: "",
+    }));
+  };
+
+  const addCustomColor = () => {
+    const next = normalizeColorValue(productForm.customColor);
+    if (!next) return;
+    setProductForm((current) => ({
+      ...current,
+      colors: toggleListValue(current.colors, next),
+      customColor: "",
+    }));
+  };
+
   const handleSaveProduct = async () => {
     setSavingProduct(true);
     try {
@@ -465,9 +592,9 @@ export default function AdminPanel() {
         price: toNumber(productForm.price),
         compareAtPrice: toOptionalNumber(productForm.compareAtPrice),
         category: productForm.category.trim(),
-        images: splitMultiLine(productForm.images),
-        colors: normalizeListInput(productForm.colors),
-        sizes: normalizeListInput(productForm.sizes),
+        images: productForm.images,
+        colors: productForm.colors,
+        sizes: productForm.sizes,
         rating: toNumber(productForm.rating, 0),
         reviewCount: toNumber(productForm.reviewCount, 0),
         tags: normalizeListInput(productForm.tags),
@@ -675,6 +802,207 @@ export default function AdminPanel() {
     </div>
   );
 
+  const renderAnalytics = () => {
+    const inflowData = [...orderSummary.dailyOrders].slice(-8);
+    const sourceData = visitSummary.sourceCounts.slice(0, 6);
+    const locationData = visitSummary.locationCounts.slice(0, 6);
+    const productData = orderSummary.productPerformance.slice(0, 8);
+
+    return (
+      <div className="space-y-5">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <StatCard label="Total visits" value={String(visitSummary.totalVisits)} icon={BarChart3} />
+          <StatCard label="Unique sessions" value={String(visitSummary.uniqueSessions)} icon={Database} />
+          <StatCard label="Orders" value={String(orderSummary.totalOrders)} icon={Package} />
+          <StatCard label="Revenue" value={`₦${orderSummary.totalRevenue.toFixed(0)}`} icon={BadgePercent} />
+          <StatCard label="Average order" value={`₦${orderSummary.averageOrderValue.toFixed(0)}`} icon={LayoutDashboard} />
+          <StatCard label="Customer docs" value={String(managedAccounts.length)} icon={Users} />
+        </div>
+
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.05] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.26em] text-white/45">Orders</p>
+                <h3 className="mt-2 font-display text-xl font-black uppercase tracking-tight text-white">Inflow over time</h3>
+              </div>
+              <CalendarDays className="h-5 w-5 text-white/60" />
+            </div>
+            <div className="mt-5 h-[320px]">
+              {inflowData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={inflowData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.12)" />
+                    <XAxis dataKey="day" tick={{ fill: "#fff", fontSize: 11 }} axisLine={{ stroke: "rgba(255,255,255,0.18)" }} tickLine={false} />
+                    <YAxis tick={{ fill: "#fff", fontSize: 11 }} axisLine={{ stroke: "rgba(255,255,255,0.18)" }} tickLine={false} />
+                    <Tooltip
+                      contentStyle={{ background: "#111", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 16, color: "#fff" }}
+                    />
+                    <Area type="monotone" dataKey="revenue" stroke="#ff5790" fill="rgba(255,87,144,0.18)" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-white/10 text-sm text-white/45">
+                  No order data yet.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.05] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
+            <p className="text-[10px] font-black uppercase tracking-[0.26em] text-white/45">Sources</p>
+            <h3 className="mt-2 font-display text-xl font-black uppercase tracking-tight text-white">Visit mix</h3>
+            <div className="mt-5 h-[260px]">
+              {sourceData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={sourceData} dataKey="count" nameKey="label" outerRadius={96} innerRadius={58} paddingAngle={4}>
+                      {sourceData.map((entry, index) => (
+                        <Cell key={entry.label} fill={chartColors[index % chartColors.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ background: "#111", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 16, color: "#fff" }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-white/10 text-sm text-white/45">
+                  No visit data yet.
+                </div>
+              )}
+            </div>
+            <div className="mt-4 space-y-2">
+              {sourceData.map((entry) => (
+                <div key={entry.label} className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm">
+                  <span className="text-white/75">{entry.label}</span>
+                  <span className="font-black text-white">{entry.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.05] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
+            <p className="text-[10px] font-black uppercase tracking-[0.26em] text-white/45">Products</p>
+            <h3 className="mt-2 font-display text-xl font-black uppercase tracking-tight text-white">Performance by product</h3>
+            <div className="mt-5 h-[320px]">
+              {productData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={productData} layout="vertical" margin={{ left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.12)" />
+                    <XAxis type="number" tick={{ fill: "#fff", fontSize: 11 }} axisLine={{ stroke: "rgba(255,255,255,0.18)" }} tickLine={false} />
+                    <YAxis type="category" dataKey="name" width={110} tick={{ fill: "#fff", fontSize: 11 }} axisLine={{ stroke: "rgba(255,255,255,0.18)" }} tickLine={false} />
+                    <Tooltip
+                      contentStyle={{ background: "#111", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 16, color: "#fff" }}
+                    />
+                    <Bar dataKey="qty" radius={[0, 12, 12, 0]} fill="#7a9b76" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-white/10 text-sm text-white/45">
+                  No product sales yet.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.05] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
+            <p className="text-[10px] font-black uppercase tracking-[0.26em] text-white/45">Locations</p>
+            <h3 className="mt-2 font-display text-xl font-black uppercase tracking-tight text-white">Browser signals</h3>
+            <div className="mt-4 space-y-3">
+              {locationData.length > 0 ? (
+                locationData.map((entry, index) => (
+                  <div key={entry.label} className="rounded-[22px] border border-white/10 bg-black/20 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-2xl bg-white/10 text-xs font-black text-white">
+                          {index + 1}
+                        </span>
+                        <div>
+                          <div className="font-bold text-white">{entry.label}</div>
+                          <div className="text-xs text-white/45">Locale and timezone</div>
+                        </div>
+                      </div>
+                      <div className="font-black text-white">{entry.count}</div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-2xl border border-dashed border-white/10 px-4 py-8 text-center text-sm text-white/45">
+                  No location data yet.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.05] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
+            <p className="text-[10px] font-black uppercase tracking-[0.26em] text-white/45">Recent visits</p>
+            <h3 className="mt-2 font-display text-xl font-black uppercase tracking-tight text-white">Session trail</h3>
+            <div className="mt-4 space-y-3">
+              {visitSummary.recentVisits.slice(0, 8).map((visit) => (
+                <div key={visit.id} className="rounded-[22px] border border-white/10 bg-black/20 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="font-bold text-white">{visit.path}</div>
+                      <div className="mt-1 text-xs text-white/50">
+                        {visit.sourceKind} · {visit.sourceHost || "direct"} · {visit.locale} · {visit.timeZone}
+                      </div>
+                    </div>
+                    <div className="text-[10px] font-black uppercase tracking-[0.22em] text-white/45">
+                      {visit.device}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {visitSummary.recentVisits.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-white/10 px-4 py-8 text-center text-sm text-white/45">
+                  No visit events yet.
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.05] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
+            <p className="text-[10px] font-black uppercase tracking-[0.26em] text-white/45">Orders</p>
+            <h3 className="mt-2 font-display text-xl font-black uppercase tracking-tight text-white">Status mix</h3>
+            <div className="mt-5 h-[240px]">
+              {orderSummary.statusCounts.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={orderSummary.statusCounts} dataKey="count" nameKey="label" outerRadius={86} innerRadius={52} paddingAngle={4}>
+                      {orderSummary.statusCounts.map((entry, index) => (
+                        <Cell key={entry.label} fill={chartColors[index % chartColors.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ background: "#111", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 16, color: "#fff" }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-white/10 text-sm text-white/45">
+                  No order statuses yet.
+                </div>
+              )}
+            </div>
+            <div className="mt-4 space-y-2">
+              {orderSummary.statusCounts.map((entry) => (
+                <div key={entry.label} className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm">
+                  <span className="text-white/75">{entry.label}</span>
+                  <span className="font-black text-white">{entry.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderProducts = () => (
     <div className="grid gap-5 xl:grid-cols-[minmax(320px,0.95fr)_minmax(0,1.05fr)]">
       <div className="rounded-[28px] border border-white/10 bg-white/[0.05] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
@@ -723,7 +1051,7 @@ export default function AdminPanel() {
       <div className="rounded-[28px] border border-white/10 bg-white/[0.05] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
         <SectionHeader
           title={selectedProduct ? "Edit product" : "Create product"}
-          subtitle="The product form persists directly to the shared Firestore documents."
+          subtitle="Pick images from your device and use checkbox-based sizes and colors."
           action={
             <div className="flex gap-2">
               <AdminButton tone="ghost" icon={Archive} onClick={handleDeleteProduct} disabled={!selectedProduct}>
@@ -748,8 +1076,6 @@ export default function AdminPanel() {
           <InputField label="Review Count" type="number" value={productForm.reviewCount} onChange={(value) => setProductField("reviewCount", value)} placeholder="42" />
           <InputField label="Stock Threshold" type="number" value={productForm.stockThreshold} onChange={(value) => setProductField("stockThreshold", value)} placeholder="10" />
           <InputField label="Status" value={productForm.status} onChange={(value) => setProductField("status", value)} placeholder="active" />
-          <InputField label="Colors" value={productForm.colors} onChange={(value) => setProductField("colors", value)} placeholder="#ff5790, #202020" />
-          <InputField label="Sizes" value={productForm.sizes} onChange={(value) => setProductField("sizes", value)} placeholder="XS, S, M, L" />
           <InputField label="Tags" value={productForm.tags} onChange={(value) => setProductField("tags", value)} placeholder="New Arrival, Best Seller" />
         </div>
 
@@ -761,13 +1087,128 @@ export default function AdminPanel() {
             placeholder="Describe the garment, materials, and styling notes."
             rows={5}
           />
-          <TextAreaField
-            label="Image URLs"
-            value={productForm.images}
-            onChange={(value) => setProductField("images", value)}
-            placeholder="Paste one URL per line"
-            rows={4}
-          />
+        </div>
+
+        <div className="mt-4 rounded-[26px] border border-white/10 bg-black/20 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-[10px] font-black uppercase tracking-[0.24em] text-white/45">Images</div>
+              <div className="mt-1 text-sm text-white/70">Upload up to four files from your device.</div>
+            </div>
+            <label className="inline-flex h-10 cursor-pointer items-center justify-center rounded-full bg-white px-4 text-[11px] font-black uppercase tracking-[0.18em] text-[#111] transition hover:bg-[#f3f3f3]">
+              Add files
+              <input type="file" accept="image/*" multiple className="hidden" onChange={(event) => void handleProductImageUpload(event)} />
+            </label>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {productForm.images.length > 0 ? (
+              productForm.images.map((src, index) => (
+                <div key={`${src.slice(0, 18)}-${index}`} className="relative overflow-hidden rounded-[20px] border border-white/10 bg-white/5">
+                  <img src={src} alt={`Product ${index + 1}`} className="h-36 w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setProductForm((current) => ({
+                        ...current,
+                        images: current.images.filter((_, imageIndex) => imageIndex !== index),
+                      }))
+                    }
+                    className="absolute right-2 top-2 rounded-full bg-black/75 p-1.5 text-white backdrop-blur"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-[20px] border border-dashed border-white/10 px-4 py-10 text-center text-sm text-white/45 sm:col-span-2 lg:col-span-4">
+                No device images selected yet.
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-[26px] border border-white/10 bg-black/20 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-[0.24em] text-white/45">Sizes</div>
+                <div className="mt-1 text-sm text-white/70">Select the available sizes for this product.</div>
+              </div>
+              <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white/70">
+                {productForm.sizes.length} selected
+              </div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {presetSizeOptions.map((size) => {
+                const active = productForm.sizes.includes(size);
+                return (
+                  <button
+                    type="button"
+                    key={size}
+                    onClick={() => setProductForm((current) => ({ ...current, sizes: toggleListValue(current.sizes, size) }))}
+                    className={`rounded-full border px-3 py-2 text-[11px] font-black uppercase tracking-[0.18em] transition ${
+                      active ? "border-white bg-white text-[#111]" : "border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/[0.08]"
+                    }`}
+                  >
+                    {size}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-4 flex gap-2">
+              <input
+                value={productForm.customSize}
+                onChange={(event) => setProductField("customSize", event.target.value)}
+                placeholder="Type a size"
+                className="h-11 flex-1 rounded-2xl border border-white/10 bg-white/[0.06] px-4 text-sm text-white outline-none placeholder:text-white/28"
+              />
+              <AdminButton tone="ghost" onClick={addCustomSize}>
+                Add
+              </AdminButton>
+            </div>
+          </div>
+
+          <div className="rounded-[26px] border border-white/10 bg-black/20 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-[0.24em] text-white/45">Colors</div>
+                <div className="mt-1 text-sm text-white/70">Select preset shades or type a custom color.</div>
+              </div>
+              <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white/70">
+                {productForm.colors.length} selected
+              </div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {presetColorOptions.map((color) => {
+                const active = productForm.colors.includes(color.value);
+                return (
+                  <button
+                    type="button"
+                    key={color.value}
+                    onClick={() => setProductForm((current) => ({ ...current, colors: toggleListValue(current.colors, color.value) }))}
+                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-black uppercase tracking-[0.18em] transition ${
+                      active ? "border-white bg-white text-[#111]" : "border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/[0.08]"
+                    }`}
+                  >
+                    <span className="h-3.5 w-3.5 rounded-full border border-black/10" style={{ backgroundColor: color.value }} />
+                    {color.label}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-4 flex gap-2">
+              <input
+                value={productForm.customColor}
+                onChange={(event) => setProductField("customColor", event.target.value)}
+                placeholder="Type a color or hex"
+                className="h-11 flex-1 rounded-2xl border border-white/10 bg-white/[0.06] px-4 text-sm text-white outline-none placeholder:text-white/28"
+              />
+              <AdminButton tone="ghost" onClick={addCustomColor}>
+                Add
+              </AdminButton>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -841,7 +1282,25 @@ export default function AdminPanel() {
           <InputField label="Emoji" value={categoryForm.emoji} onChange={(value) => setCategoryField("emoji", value)} placeholder="👗" />
         </div>
         <div className="mt-4 grid gap-4">
-          <InputField label="Image URL" value={categoryForm.image} onChange={(value) => setCategoryField("image", value)} placeholder="https://..." />
+          <div className="rounded-[26px] border border-white/10 bg-black/20 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-[0.24em] text-white/45">Category image</div>
+                <div className="mt-1 text-sm text-white/70">Upload from your device instead of pasting a URL.</div>
+              </div>
+              <label className="inline-flex h-10 cursor-pointer items-center justify-center rounded-full bg-white px-4 text-[11px] font-black uppercase tracking-[0.18em] text-[#111] transition hover:bg-[#f3f3f3]">
+                Choose file
+                <input type="file" accept="image/*" className="hidden" onChange={(event) => void handleCategoryImageUpload(event)} />
+              </label>
+            </div>
+            <div className="mt-4 overflow-hidden rounded-[20px] border border-white/10 bg-white/[0.04]">
+              {categoryForm.image ? (
+                <img src={categoryForm.image} alt={categoryForm.name || "Category"} className="h-44 w-full object-cover" />
+              ) : (
+                <div className="flex h-44 items-center justify-center text-sm text-white/45">No device image selected.</div>
+              )}
+            </div>
+          </div>
           <ToggleField
             label="Active"
             checked={categoryForm.active}
@@ -1090,6 +1549,7 @@ export default function AdminPanel() {
 
         <div className="mt-5">
           {activeTab === "overview" && renderOverview()}
+          {activeTab === "analytics" && renderAnalytics()}
           {activeTab === "products" && renderProducts()}
           {activeTab === "categories" && renderCategories()}
           {activeTab === "vouchers" && renderVouchers()}

@@ -6,6 +6,8 @@ Fabruby is a fashion storefront prototype built with React, Vite, TypeScript, Ta
 
 - Firebase Auth for sign-in and registration
 - Firestore-backed user profile, settings, cart, wishlist, orders, shipping addresses, and reviews
+- Guest checkout that can complete the demo flow without sign-in
+- Firebase Storage-backed catalog image uploads from the admin panel
 - Responsive storefront UI with mobile-first navigation
 - Demo checkout flow that records an order locally in Firestore-backed user data
 
@@ -29,6 +31,16 @@ Create a production build with:
 
 `npm run build`
 
+## Firebase deploy
+
+The repo now includes a minimal `firebase.json` so the standard Firebase CLI picks up Firestore and Storage rules together:
+
+`firebase deploy --only firestore,storage`
+
+If you also want hosting:
+
+`firebase deploy --only hosting,firestore,storage`
+
 ## Admin claims
 
 To grant the Firestore admin claim required by the catalog panel:
@@ -49,3 +61,4 @@ Use `--revoke` with the same command to remove the claim.
 - Checkout is a polished demo flow right now, not a live Paystack integration.
 - Product data is still seeded from local catalog data for the prototype.
 - Firestore security rules allow catalog reads and restrict writes to authenticated admins with the `admin` custom claim.
+- Storage rules allow public reads of catalog assets and restrict writes to authenticated admins with the `admin` custom claim.

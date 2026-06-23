@@ -3,13 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import { useOrders } from "../../context/OrdersContext";
+import { useSettings } from "../../context/SettingsContext";
 import { useToast } from "../../context/ToastContext";
+import type { Order } from "../../lib/userAccount";
+import { saveGuestOrder } from "../../lib/guestOrders";
 
 export default function PaymentProcessing() {
   const navigate = useNavigate();
   const { pushToast } = useToast();
   const { items, subtotal, discountAmount, shippingFee, total, clearCart } = useCart();
   const { placeOrder } = useOrders();
+  const { firebaseUser, userProfile } = useSettings();
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -51,7 +55,7 @@ export default function PaymentProcessing() {
         isDefault: true,
       };
 
-      const createdOrder = placeOrder({
+      const orderPayload: Omit<Order, "id" | "date" | "estDelivery"> = {
         items,
         subtotal,
         discount: discountAmount,
@@ -60,15 +64,35 @@ export default function PaymentProcessing() {
         status: "placed",
         shippingAddress,
         paymentMethod: "Paystack demo",
-      });
+      };
+
+      const createdOrder = firebaseUser
+        ? placeOrder(orderPayload)
+        : ({
+            ...orderPayload,
+            id: `GST-${Date.now()}`,
+            date: new Date().toLocaleString(),
+            estDelivery: "Delivery details pending",
+          } as Order);
+
+      if (!firebaseUser) {
+        saveGuestOrder({
+          ...createdOrder,
+          shippingAddress: {
+            ...createdOrder.shippingAddress,
+            name: userProfile.name || "Guest checkout",
+            street: createdOrder.shippingAddress.street || "Guest shipping details",
+          },
+        });
+      }
 
       clearCart();
-      pushToast("Order recorded. Ready for the live payment handoff.");
+      pushToast(firebaseUser ? "Order recorded. Ready for the live payment handoff." : "Guest order recorded. You can continue without signing in.");
       navigate(`/checkout/success?orderId=${createdOrder.id}`);
     };
 
     void finalizePayment();
-  }, [progress, items, subtotal, discountAmount, shippingFee, total, placeOrder, clearCart, pushToast, navigate]);
+  }, [progress, items, subtotal, discountAmount, shippingFee, total, placeOrder, clearCart, pushToast, navigate, firebaseUser, userProfile.name]);
 
   return (
     <div className="flex-1 flex flex-col bg-white justify-center items-center p-6 text-center animate-fade-up-enter min-h-screen">

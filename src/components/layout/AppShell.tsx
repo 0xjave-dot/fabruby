@@ -2,6 +2,8 @@ import { useEffect, useMemo, type ReactNode, type CSSProperties } from "react";
 import { useLocation, Outlet, useNavigate } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../lib/auth";
+import { recordVisit } from "../../lib/adminAnalytics";
 import { ArrowRight, Search } from "lucide-react";
 import { buildDailyTheme, rgbaFromHex } from "../../lib/colorTheme";
 import { getTodaysColorEntry } from "../../data/colorOfTheDay";
@@ -14,6 +16,7 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { itemCount } = useCart();
   const todayEntry = useMemo(() => getTodaysColorEntry(), []);
   const theme = useMemo(() => buildDailyTheme(todayEntry.hex), [todayEntry.hex]);
@@ -57,6 +60,10 @@ export function AppShell({ children }: AppShellProps) {
       style.setProperty("--color-pink", previous.colorPink);
     };
   }, [theme.accent, theme.accentLight, theme.shellBackground]);
+
+  useEffect(() => {
+    void recordVisit(`${location.pathname}${location.search}`, user?.uid);
+  }, [location.pathname, location.search, user?.uid]);
 
   return (
     <div className="min-h-screen w-full font-sans antialiased text-[#202020]" style={shellStyle}>

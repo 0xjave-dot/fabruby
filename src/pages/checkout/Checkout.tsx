@@ -9,10 +9,11 @@ import { useToast } from "../../context/ToastContext";
 export default function Checkout() {
   const navigate = useNavigate();
   const { pushToast } = useToast();
-  const { currencySymbol, userProfile, account } = useSettings();
+  const { currencySymbol, userProfile, account, firebaseUser } = useSettings();
   const { items, appliedVoucher, subtotal, discountAmount, shippingFee, total } = useCart();
 
   const defaultAddress = account.shippingAddresses.items.find((address) => address.isDefault) ?? account.shippingAddresses.items[0];
+  const isGuest = !firebaseUser;
 
   if (items.length === 0) {
     return (
@@ -26,7 +27,7 @@ export default function Checkout() {
   }
 
   const handlePayment = () => {
-    pushToast("Reviewing order and continuing to the demo payment step.");
+    pushToast(isGuest ? "Continuing as guest to the demo payment step." : "Reviewing order and continuing to the demo payment step.");
     navigate("/checkout/processing");
   };
 
@@ -44,34 +45,42 @@ export default function Checkout() {
                     Shipping Address
                   </h3>
                   <p className="font-sans text-xs text-gray2 mt-1">
-                    Confirm the delivery address before completing the order.
+                    {isGuest
+                      ? "Continue as guest and add delivery details in the next step."
+                      : "Confirm the delivery address before completing the order."}
                   </p>
                 </div>
-                <button
-                  onClick={() => navigate("/settings/shipping-address")}
-                  className="text-[12.5px] font-display font-bold text-blue hover:underline cursor-pointer"
-                >
-                  Edit
-                </button>
+                {!isGuest ? (
+                  <button
+                    onClick={() => navigate("/settings/shipping-address")}
+                    className="text-[12.5px] font-display font-bold text-blue hover:underline cursor-pointer"
+                  >
+                    Edit
+                  </button>
+                ) : (
+                  <span className="text-[11px] font-black uppercase tracking-[0.18em] text-[#888]">Guest</span>
+                )}
               </div>
               <div
-                onClick={() => navigate("/settings/shipping-address")}
-                className="p-5 flex items-start gap-4 cursor-pointer hover:bg-gray/40 transition-colors"
+                onClick={() => !isGuest && navigate("/settings/shipping-address")}
+                className={`p-5 flex items-start gap-4 transition-colors ${isGuest ? "cursor-default" : "cursor-pointer hover:bg-gray/40"}`}
               >
                 <div className="w-[42px] h-[42px] bg-blue-light/50 rounded-std flex items-center justify-center flex-shrink-0">
                   <MapPin className="w-4.5 h-4.5 text-blue" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="font-display font-extrabold text-[15px] text-dark">
-                    {defaultAddress?.name || userProfile.name || "Add shipping address"}
+                    {isGuest ? "Guest checkout" : defaultAddress?.name || userProfile.name || "Add shipping address"}
                   </div>
                   <p className="font-sans text-sm text-gray2 leading-relaxed mt-1">
-                    {defaultAddress
-                      ? defaultAddress.street
-                      : "Tap to add a shipping address so this order can be delivered."}
+                    {isGuest
+                      ? "You can complete the demo order without signing in. Delivery details can be captured in the next step."
+                      : defaultAddress
+                        ? defaultAddress.street
+                        : "Tap to add a shipping address so this order can be delivered."}
                   </p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-gray2 self-center" />
+                {!isGuest ? <ChevronRight className="w-4 h-4 text-gray2 self-center" /> : null}
               </div>
             </div>
 
@@ -177,7 +186,7 @@ export default function Checkout() {
               onClick={handlePayment}
               className="btn-primary w-full h-[58px] bg-blue text-white rounded-std text-[15px] font-display font-extrabold shadow-std active:scale-[0.98] transition-transform flex items-center justify-center cursor-pointer"
             >
-              Complete Order
+              {isGuest ? "Continue as Guest" : "Complete Order"}
             </button>
 
             <div className="rounded-[20px] border border-amber-200 bg-amber-50 p-4 text-[12px] text-amber-900 flex gap-3">

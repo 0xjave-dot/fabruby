@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
 import { useOrders } from "../../context/OrdersContext";
 import { useSettings } from "../../context/SettingsContext";
+import { getGuestOrder } from "../../lib/guestOrders";
 
 export default function PaymentSuccess() {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ export default function PaymentSuccess() {
   const { currencySymbol } = useSettings();
 
   const order = useMemo(() => {
-    return getOrderById(orderId);
+    return getOrderById(orderId) ?? getGuestOrder(orderId);
   }, [orderId, getOrderById]);
 
   const displayId = order?.id ?? "#SHP-PENDING";
@@ -54,12 +55,23 @@ export default function PaymentSuccess() {
         </div>
 
         <div className="w-full space-y-3">
-          <button
-            onClick={() => navigate("/orders")}
-            className="btn-primary w-full h-[54px] bg-blue text-white rounded-std text-[14.5px] font-display font-bold shadow-std active:scale-[0.98] transition-transform flex items-center justify-center cursor-pointer"
-          >
-            Track My Order
-          </button>
+          {order ? (
+            orderId.startsWith("GST-") ? (
+              <button
+                onClick={() => navigate("/")}
+                className="btn-primary w-full h-[54px] bg-blue text-white rounded-std text-[14.5px] font-display font-bold shadow-std active:scale-[0.98] transition-transform flex items-center justify-center cursor-pointer"
+              >
+                Continue Shopping
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate("/orders")}
+                className="btn-primary w-full h-[54px] bg-blue text-white rounded-std text-[14.5px] font-display font-bold shadow-std active:scale-[0.98] transition-transform flex items-center justify-center cursor-pointer"
+              >
+                Track My Order
+              </button>
+            )
+          ) : null}
 
           <button
             onClick={() => navigate("/")}

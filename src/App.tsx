@@ -101,9 +101,9 @@ export default function App() {
                     <Route path="/cart" element={<Cart />} />
 
                     {/* Checkout and payments */}
-                    <Route path="/checkout" element={user ? <Checkout /> : <Navigate to="/login" replace />} />
-                    <Route path="/checkout/processing" element={user ? <PaymentProcessing /> : <Navigate to="/login" replace />} />
-                    <Route path="/checkout/success" element={user ? <PaymentSuccess /> : <Navigate to="/login" replace />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/checkout/processing" element={<PaymentProcessing />} />
+                  <Route path="/checkout/success" element={<PaymentSuccess />} />
 
                     {/* Profile and client tracking */}
                     <Route path="/profile" element={<Profile />} />
