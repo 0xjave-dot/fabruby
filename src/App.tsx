@@ -34,7 +34,7 @@ import PaymentSuccess from "./pages/checkout/PaymentSuccess";
 // Account Pages
 import Profile from "./pages/account/Profile";
 import EditProfile from "./pages/account/EditProfile";
-import Activity from "./pages/account/Activity";
+import Orders from "./pages/account/Orders";
 import OrderTracking from "./pages/account/OrderTracking";
 import WriteReview from "./pages/account/WriteReview";
 import ReviewDone from "./pages/account/ReviewDone";
@@ -109,7 +109,7 @@ export default function App() {
                     <Route path="/wishlist" element={user ? <Wishlist /> : <Navigate to="/login" replace />} />
 
                     {/* Order histories and reviews */}
-                    <Route path="/orders" element={<Activity />} />
+                    <Route path="/orders" element={requireAuth(<Orders />)} />
                     <Route path="/orders/:id/track" element={<OrderTracking />} />
                     <Route path="/orders/:id/review" element={<WriteReview />} />
                     <Route path="/orders/:id/review/done" element={<ReviewDone />} />

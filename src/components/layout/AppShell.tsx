@@ -75,20 +75,9 @@ export function AppShell({ children }: AppShellProps) {
                 boxShadow: `0 0 0 6px ${rgbaFromHex(theme.accent, 0.12)}`,
               }}
             />
-            <div className="min-w-0">
-              <div className="font-display text-[10px] font-black uppercase tracking-[0.24em] text-[#666]">
-                Today&apos;s Color
-              </div>
-              <div className="truncate font-display text-[14px] font-extrabold text-dark">
-                {todayEntry.color}
-              </div>
-            </div>
           </div>
 
           <div className="hidden items-center gap-2 sm:flex">
-            <span className="font-display text-[10px] font-black uppercase tracking-[0.24em]" style={{ color: theme.accent }}>
-              Shop the shade
-            </span>
             <span
               className="flex h-7 w-7 items-center justify-center rounded-full border border-white/70 bg-white/70 shadow-sm"
               style={{ color: theme.accent }}

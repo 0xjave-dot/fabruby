@@ -8,6 +8,7 @@ import {
   MessageSquare,
   LogIn,
   ShieldCheck,
+  Package,
 } from "lucide-react";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useSettings } from "../../context/SettingsContext";
@@ -131,6 +132,17 @@ export default function Profile() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
+          <div onClick={() => navigate("/orders")} className="setting-row flex items-center py-3.5 border-b border-gray3/30 cursor-pointer select-none group px-1">
+            <div className="icon-wrap w-[36px] h-[36px] rounded-std bg-blue-light/50 text-blue flex items-center justify-center mr-3 flex-shrink-0">
+              <Package className="w-4.5 h-4.5" />
+            </div>
+            <span className="flex-grow font-display font-bold text-[14.5px] text-dark group-hover:text-blue transition-colors">Orders</span>
+            <span className="text-xs bg-[#f3f7ff] text-blue font-bold px-2 py-0.5 rounded-full mr-2">
+              {account.orders.items.length}
+            </span>
+            <ChevronRight className="w-4.5 h-4.5 text-gray2" />
+          </div>
+
           <div onClick={() => navigate("/settings/vouchers")} className="setting-row flex items-center py-3.5 border-b border-gray3/30 cursor-pointer select-none group px-1">
             <div className="icon-wrap w-[36px] h-[36px] rounded-std bg-blue-light/50 text-blue flex items-center justify-center mr-3 flex-shrink-0">
               <Ticket className="w-4.5 h-4.5" />
