@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import {
   Archive,
@@ -411,6 +411,9 @@ export default function AdminPanel() {
   const [colorDrafts, setColorDrafts] = useState<ColorFormState[]>([]);
   const [scheduleDirty, setScheduleDirty] = useState(false);
   const [savingSchedule, setSavingSchedule] = useState(false);
+  const productFormRef = useRef<HTMLDivElement | null>(null);
+  const categoryFormRef = useRef<HTMLDivElement | null>(null);
+  const voucherFormRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!selectedProductId) {
@@ -529,6 +532,24 @@ export default function AdminPanel() {
   const resetProduct = () => {
     setSelectedProductId(null);
     setProductForm(productToForm());
+  };
+
+  const scrollToProductForm = () => {
+    window.requestAnimationFrame(() => {
+      productFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
+  const scrollToCategoryForm = () => {
+    window.requestAnimationFrame(() => {
+      categoryFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
+  const scrollToVoucherForm = () => {
+    window.requestAnimationFrame(() => {
+      voucherFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   };
 
   const resetCategory = () => {
@@ -714,38 +735,6 @@ export default function AdminPanel() {
               <StatCard label={stat.label} value={stat.value} icon={stat.icon} />
             </div>
           ))}
-        </div>
-
-        <div className="rounded-[28px] border border-white/10 bg-white/[0.05] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.26em] text-white/45">Shared layer</p>
-              <h3 className="mt-2 font-display text-xl font-black uppercase tracking-tight text-white">
-                One catalog, two surfaces
-              </h3>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-white/70">
-                These edits target the same Firestore collections that the storefront reads from, so product updates and admin changes stay in sync instead of drifting apart.
-              </p>
-            </div>
-            <ShieldCheck className="h-6 w-6 text-[#8fe3c0]" />
-          </div>
-
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <div className="rounded-[22px] border border-white/10 bg-black/20 p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/40">Current focus</p>
-              <div className="mt-2 font-display text-lg font-black uppercase text-white">Catalog curation</div>
-              <p className="mt-2 text-sm leading-6 text-white/64">
-                Products, categories, vouchers, and color drops are editable directly from here.
-              </p>
-            </div>
-            <div className="rounded-[22px] border border-white/10 bg-black/20 p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/40">Firestore note</p>
-              <div className="mt-2 font-display text-lg font-black uppercase text-white">Rules still matter</div>
-              <p className="mt-2 text-sm leading-6 text-white/64">
-                The UI is ready, but your Firestore security rules still need an admin-safe write policy before these actions can persist in production.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -1013,7 +1002,14 @@ export default function AdminPanel() {
             <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/45">Library</p>
             <h3 className="mt-2 font-display text-xl font-black uppercase tracking-tight text-white">Saved products</h3>
           </div>
-          <AdminButton tone="ghost" icon={Plus} onClick={resetProduct}>
+          <AdminButton
+            tone="ghost"
+            icon={Plus}
+            onClick={() => {
+              resetProduct();
+              scrollToProductForm();
+            }}
+          >
             New
           </AdminButton>
         </div>
@@ -1029,7 +1025,10 @@ export default function AdminPanel() {
               return (
                 <button
                   key={product.id}
-                  onClick={() => setSelectedProductId(product.id)}
+                  onClick={() => {
+                    setSelectedProductId(product.id);
+                    scrollToProductForm();
+                  }}
                   className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
                     isActive ? "border-[#ff5790]/40 bg-[#ff5790]/10" : "border-white/10 bg-white/[0.04] hover:bg-white/[0.08]"
                   }`}
@@ -1050,7 +1049,7 @@ export default function AdminPanel() {
         </div>
       </div>
 
-      <div className="rounded-[28px] border border-white/10 bg-white/[0.05] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
+      <div ref={productFormRef} className="rounded-[28px] border border-white/10 bg-white/[0.05] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
         <SectionHeader
           title={selectedProduct ? "Edit product" : "Create product"}
           subtitle="Pick images from your device and use checkbox-based sizes and colors."
@@ -1224,7 +1223,14 @@ export default function AdminPanel() {
             <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/45">Library</p>
             <h3 className="mt-2 font-display text-xl font-black uppercase tracking-tight text-white">Saved categories</h3>
           </div>
-          <AdminButton tone="ghost" icon={Plus} onClick={resetCategory}>
+          <AdminButton
+            tone="ghost"
+            icon={Plus}
+            onClick={() => {
+              resetCategory();
+              scrollToCategoryForm();
+            }}
+          >
             New
           </AdminButton>
         </div>
@@ -1240,7 +1246,10 @@ export default function AdminPanel() {
               return (
                 <button
                   key={category.slug}
-                  onClick={() => setSelectedCategorySlug(category.slug)}
+                  onClick={() => {
+                    setSelectedCategorySlug(category.slug);
+                    scrollToCategoryForm();
+                  }}
                   className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
                     isActive ? "border-[#8fe3c0]/40 bg-[#8fe3c0]/10" : "border-white/10 bg-white/[0.04] hover:bg-white/[0.08]"
                   }`}
@@ -1261,7 +1270,7 @@ export default function AdminPanel() {
         </div>
       </div>
 
-      <div className="rounded-[28px] border border-white/10 bg-white/[0.05] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
+      <div ref={categoryFormRef} className="rounded-[28px] border border-white/10 bg-white/[0.05] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
         <SectionHeader
           title={selectedCategory ? "Edit category" : "Create category"}
           subtitle="Categories are keyed by slug, which keeps storefront navigation and admin edits aligned."
@@ -1322,7 +1331,14 @@ export default function AdminPanel() {
             <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/45">Library</p>
             <h3 className="mt-2 font-display text-xl font-black uppercase tracking-tight text-white">Saved vouchers</h3>
           </div>
-          <AdminButton tone="ghost" icon={Plus} onClick={resetVoucher}>
+          <AdminButton
+            tone="ghost"
+            icon={Plus}
+            onClick={() => {
+              resetVoucher();
+              scrollToVoucherForm();
+            }}
+          >
             New
           </AdminButton>
         </div>
@@ -1338,7 +1354,10 @@ export default function AdminPanel() {
               return (
                 <button
                   key={voucher.code}
-                  onClick={() => setSelectedVoucherCode(voucher.code)}
+                  onClick={() => {
+                    setSelectedVoucherCode(voucher.code);
+                    scrollToVoucherForm();
+                  }}
                   className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
                     isActive ? "border-[#ffd66e]/40 bg-[#ffd66e]/10" : "border-white/10 bg-white/[0.04] hover:bg-white/[0.08]"
                   }`}
@@ -1359,7 +1378,7 @@ export default function AdminPanel() {
         </div>
       </div>
 
-      <div className="rounded-[28px] border border-white/10 bg-white/[0.05] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
+      <div ref={voucherFormRef} className="rounded-[28px] border border-white/10 bg-white/[0.05] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
         <SectionHeader
           title={selectedVoucher ? "Edit voucher" : "Create voucher"}
           subtitle="Voucher documents are keyed by code, so the storefront and support team can reference the same code names."
@@ -1524,7 +1543,7 @@ export default function AdminPanel() {
               </span>
               <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/65">
                 <RefreshCcw className="h-3.5 w-3.5" />
-                Firestore linked
+                
               </span>
             </div>
           </div>

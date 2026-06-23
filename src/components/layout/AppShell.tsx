@@ -134,7 +134,7 @@ export function AppShell({ children }: AppShellProps) {
         </header>
 
         {/* Scrollable content canvas */}
-        <div className={`flex-grow flex flex-col ${showBottomNav ? "pb-[calc(92px+env(safe-area-inset-bottom))] md:pb-0" : ""} overflow-y-auto no-scrollbar`}>
+        <div className={`flex-grow min-h-0 flex flex-col ${showBottomNav ? "pb-[calc(92px+env(safe-area-inset-bottom))] md:pb-0" : ""} overflow-y-auto no-scrollbar`}>
           <div className="w-full mx-auto flex-1 md:px-0">
             {children || <Outlet />}
           </div>
