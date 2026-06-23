@@ -148,7 +148,9 @@ export function useProducts(): { products: CatalogProduct[]; loading: boolean } 
     [remote.items],
   );
 
-  return { products: sortByUpdatedAtDescending(products), loading: remote.loading };
+  const sortedProducts = useMemo(() => sortByUpdatedAtDescending(products), [products]);
+
+  return { products: sortedProducts, loading: remote.loading };
 }
 
 export function useCategories(): { categories: CatalogCategory[]; loading: boolean } {
@@ -159,7 +161,9 @@ export function useCategories(): { categories: CatalogCategory[]; loading: boole
     [remote.items],
   );
 
-  return { categories: sortByUpdatedAtDescending(categories), loading: remote.loading };
+  const sortedCategories = useMemo(() => sortByUpdatedAtDescending(categories), [categories]);
+
+  return { categories: sortedCategories, loading: remote.loading };
 }
 
 export function useVouchers(): { vouchers: CatalogVoucher[]; loading: boolean } {
@@ -170,7 +174,9 @@ export function useVouchers(): { vouchers: CatalogVoucher[]; loading: boolean } 
     [remote.items],
   );
 
-  return { vouchers: sortByUpdatedAtDescending(vouchers), loading: remote.loading };
+  const sortedVouchers = useMemo(() => sortByUpdatedAtDescending(vouchers), [vouchers]);
+
+  return { vouchers: sortedVouchers, loading: remote.loading };
 }
 
 export function useReviews(): { reviews: CatalogReview[]; loading: boolean } {
@@ -181,7 +187,9 @@ export function useReviews(): { reviews: CatalogReview[]; loading: boolean } {
     [remote.items],
   );
 
-  return { reviews: sortByUpdatedAtDescending(reviews), loading: remote.loading };
+  const sortedReviews = useMemo(() => sortByUpdatedAtDescending(reviews), [reviews]);
+
+  return { reviews: sortedReviews, loading: remote.loading };
 }
 
 export function useColorSchedule(): { schedule: CatalogColorEntry[]; loading: boolean } {

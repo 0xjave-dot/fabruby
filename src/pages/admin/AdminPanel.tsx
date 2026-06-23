@@ -361,12 +361,14 @@ function AdminButton({
   tone = "primary",
   icon: Icon,
   disabled,
+  type = "button",
 }: {
   children: ReactNode;
   onClick?: () => void;
   tone?: "primary" | "ghost" | "danger";
   icon?: typeof Save;
   disabled?: boolean;
+  type?: "button" | "submit" | "reset";
 }) {
   const base = "inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 text-[11px] font-black uppercase tracking-[0.18em] transition";
   const tones = {
@@ -375,7 +377,7 @@ function AdminButton({
     danger: "bg-[#ff5d6d] text-white hover:bg-[#ff4e61]",
   };
   return (
-    <button disabled={disabled} onClick={onClick} className={`${base} ${tones[tone]} ${disabled ? "cursor-not-allowed opacity-60" : ""}`}>
+    <button type={type} disabled={disabled} onClick={onClick} className={`${base} ${tones[tone]} ${disabled ? "cursor-not-allowed opacity-60" : ""}`}>
       {Icon ? <Icon className="h-4 w-4" /> : null}
       {children}
     </button>
