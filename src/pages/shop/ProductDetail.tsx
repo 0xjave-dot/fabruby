@@ -158,7 +158,7 @@ export default function ProductDetail() {
                 className="absolute right-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white backdrop-blur-md opacity-90 transition group-hover:opacity-100"
               >
                 <ZoomIn className="h-3.5 w-3.5" />
-                View image
+                Product Images
               </button>
               <img
                 src={activeImage}

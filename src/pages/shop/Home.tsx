@@ -5,6 +5,7 @@ import { categories } from "../../data/categories";
 import { products } from "../../data/products";
 import { TodayColorSection } from "../../components/common/TodayColorSection";
 import { DailyPromoCarousel } from "../../components/common/DailyPromoCarousel";
+import { ScrollReveal } from "../../components/common/ScrollReveal";
 import { ProductCard } from "../../components/common/ProductCard";
 import { useCart } from "../../context/CartContext";
 import { ProductCardSkeleton } from "../../components/common/Skeleton";
@@ -93,15 +94,17 @@ export default function Home() {
 
       {/* Main Home Scroll Area */}
       <div className="px-4 sm:px-5 space-y-6">
-        <div className="mt-4">
+        <ScrollReveal className="mt-4">
           <DailyPromoCarousel />
-        </div>
+        </ScrollReveal>
 
         {/* Today's Color Daily Drop Section */}
-        <TodayColorSection />
+        <ScrollReveal delay={0.05}>
+          <TodayColorSection />
+        </ScrollReveal>
 
         {/* Categories Circular Quick Hub */}
-        <div className="py-2.5 flex justify-center w-full">
+        <ScrollReveal delay={0.08} className="py-2.5 flex justify-center w-full">
           <div className="grid grid-cols-4 gap-3 sm:gap-5 w-full max-w-md">
             {isLoading ? (
               Array.from({ length: 4 }).map((_, idx) => (
@@ -140,7 +143,7 @@ export default function Home() {
               })
             )}
           </div>
-        </div>
+        </ScrollReveal>
 
         {/* Dynamic Category Products Grid */}
         <div className="space-y-4">
@@ -163,23 +166,25 @@ export default function Home() {
                 <ProductCardSkeleton key={idx} />
               ))
             ) : (
-              categoryProducts.slice(0, 8).map((prod) => (
-                <div key={prod.id} className="animate-fade-in flex">
-                  <ProductCard product={prod} />
-                </div>
+              categoryProducts.slice(0, 8).map((prod, index) => (
+                <React.Fragment key={prod.id}>
+                  <ScrollReveal delay={index * 0.05} className="flex">
+                    <ProductCard product={prod} />
+                  </ScrollReveal>
+                </React.Fragment>
               ))
             )}
           </div>
         </div>
 
-        <div className="pt-1 pb-24 sm:pb-28 flex justify-center">
+        <ScrollReveal className="pt-1 pb-24 sm:pb-28 flex justify-center">
           <button
             onClick={goToActiveCategory}
             className="inline-flex h-12 items-center justify-center rounded-full bg-dark px-6 font-display text-[12px] font-black uppercase tracking-[0.18em] text-white shadow-[0_12px_28px_rgba(0,0,0,0.12)] transition hover:scale-[1.02] active:scale-[0.98]"
           >
             View All Products
           </button>
-        </div>
+        </ScrollReveal>
       </div>
     </div>
   );

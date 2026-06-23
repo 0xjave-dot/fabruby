@@ -29,8 +29,23 @@ Create a production build with:
 
 `npm run build`
 
+## Admin claims
+
+To grant the Firestore admin claim required by the catalog panel:
+
+1. Set `FIREBASE_SERVICE_ACCOUNT_JSON` or `GOOGLE_APPLICATION_CREDENTIALS` in your environment.
+2. Run:
+
+   `npm run grant-admin -- --email admin@example.com`
+
+   or:
+
+   `npm run grant-admin -- --uid FIREBASE_UID`
+
+Use `--revoke` with the same command to remove the claim.
+
 ## Notes
 
 - Checkout is a polished demo flow right now, not a live Paystack integration.
 - Product data is still seeded from local catalog data for the prototype.
-- Firestore security rules are limited to the signed-in user owning their `/users/{uid}` document.
+- Firestore security rules allow catalog reads and restrict writes to authenticated admins with the `admin` custom claim.

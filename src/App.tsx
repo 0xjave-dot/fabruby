@@ -54,6 +54,7 @@ import About from "./pages/settings/About";
 
 // Chat Support Page
 import ChatSupport from "./pages/support/ChatSupport";
+import AdminPanel from "./pages/admin/AdminPanel";
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -73,21 +74,22 @@ export default function App() {
           <WishlistProvider>
             <CartProvider>
               <OrdersProvider>
-                <AppShell>
-                  <Routes>
-                    {/* Authentication pathways */}
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/pin-verify" element={<PinVerify />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Routes>
+                  {/* Authentication pathways */}
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/pin-verify" element={<PinVerify />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/adminpanel" element={user ? <AdminPanel /> : <Navigate to="/login" replace />} />
+                  <Route path="/admin" element={<Navigate to="/adminpanel" replace />} />
 
+                  <Route element={<AppShell />}>
                     {/* Main Shop routes */}
                     <Route path="/" element={<Home />} />
                     <Route path="/search" element={<Search />} />
                     <Route path="/search/results" element={<SearchResults />} />
-                    
-                    {/* Categories system */}
 
+                    {/* Categories system */}
                     <Route path="/category/:slug" element={<CategoryList />} />
                     <Route path="/all" element={<AllProducts />} />
 
@@ -97,7 +99,7 @@ export default function App() {
 
                     {/* Cart operations */}
                     <Route path="/cart" element={<Cart />} />
-                    
+
                     {/* Checkout and payments */}
                     <Route path="/checkout" element={user ? <Checkout /> : <Navigate to="/login" replace />} />
                     <Route path="/checkout/processing" element={user ? <PaymentProcessing /> : <Navigate to="/login" replace />} />
@@ -118,7 +120,7 @@ export default function App() {
                     <Route path="/settings" element={requireAuth(<Settings />)} />
                     <Route path="/settings/shipping-address" element={requireAuth(<ShippingAddress />)} />
                     <Route path="/settings/shipping-address/edit" element={requireAuth(<EditShippingAddress />)} />
-                    
+
                     {/* Metric lists */}
                     <Route path="/settings/sizes" element={requireAuth(<Sizes />)} />
                     <Route path="/settings/currency" element={requireAuth(<Currency />)} />
@@ -133,8 +135,8 @@ export default function App() {
 
                     {/* Wildcard redirects back to home store boards */}
                     <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </AppShell>
+                  </Route>
+                </Routes>
               </OrdersProvider>
             </CartProvider>
           </WishlistProvider>

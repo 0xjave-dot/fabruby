@@ -6,6 +6,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ProductCard } from "../../components/common/ProductCard";
 import { EmptyState } from "../../components/common/EmptyState";
 import { FilterSheet, FilterState } from "../../components/common/FilterSheet";
+import { ScrollReveal } from "../../components/common/ScrollReveal";
 import { categories } from "../../data/categories";
 import { products } from "../../data/products";
 
@@ -156,10 +157,12 @@ export default function CategoryList() {
         {/* Product boards */}
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredProducts.map((prod) => (
-              <div key={prod.id} className="flex">
-                <ProductCard product={prod} />
-              </div>
+            {filteredProducts.map((prod, index) => (
+              <React.Fragment key={prod.id}>
+                <ScrollReveal delay={index * 0.04} className="flex">
+                  <ProductCard product={prod} />
+                </ScrollReveal>
+              </React.Fragment>
             ))}
           </div>
         ) : (

@@ -106,7 +106,7 @@ export const products: Product[] = [
   {
     id: "dr-001",
     name: "Blush Lily Silk Maxi Dress",
-    description: "A flowing pure silk maxi dress in elegant blush pink. Features a beautifully draped cowl neckline, a subtle side slit for leg movement, and delicate criss-cross back design that exudes timeless glamour.",
+    description: "Cut from luxuriously soft fabric with a flattering silhouette that cinches at all the right places, this versatile dress transitions seamlessly from office sophistication to evening elegance.",
     price: 49500.00,
     category: "",
     images: ["https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=600&q=80"],
@@ -148,7 +148,7 @@ export const products: Product[] = [
   {
     id: "tp-009",
     name: "Blush Breeze Pleated Co-ord",
-    description: "An elegant, lightweight plissé co-ord set in sweet blush pink. Features a loose-fit long sleeve top with detailed sleeve ruffles and high-rise elasticated palazzo trousers that glide as you walk.",
+    description: "A modern matching set that offers endless styling possibilities, allowing you to wear the pieces together for a polished look or separately to maximize your wardrobe.",
     price: 48000.00,
     category: "",
     images: ["https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=80"],
@@ -785,7 +785,7 @@ fillTo70(
   (i) => ({
     id: `shoes-gen-${i}`,
     name: `Premium Leather Shoe ${i}`,
-    description: `Luxury styling meets unrivaled modern walkability. Features hand-crafted leather insoles, balanced stiletto high heel supports, and specialized contouring for everyday elegance.`,
+    description: `Designed with a chic block heel and cushioned insole, these stunning pumps deliver sky-high style without sacrificing all-day comfort.`,
     price: 28000.00 + (i * 450) % 12000,
     compareAtPrice: 39000.00 + (i * 450) % 12000,
     category: "shoes",
@@ -805,7 +805,7 @@ fillTo70(
   (i) => ({
     id: `handbags-gen-${i}`,
     name: `Signature Evening Bag ${i}`,
-    description: `A masterclass in modern hardware and structural luxury design. Offers optimized pocket organizers, golden key lock mechanisms, and a durable luxury leather frame.`,
+    description: `Crafted from premium pebbled leather with gold-tone hardware, this spacious yet structured handbag is the perfect finishing touch for any outfit.`,
     price: 49000.00 + (i * 520) % 25000,
     compareAtPrice: 65000.00 + (i * 520) % 25000,
     category: "bags",
