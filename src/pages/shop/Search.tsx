@@ -32,7 +32,7 @@ export default function Search() {
 
   return (
     <div className="flex-1 flex flex-col bg-white animate-fade-up-enter min-h-screen">
-      <div className="px-4 sm:px-5 py-3.5 sticky top-0 bg-white/92 backdrop-blur-xl z-50 border-b border-black/5">
+      <div className="sticky top-0 z-[70] flex-none px-4 sm:px-5 py-3.5 bg-white/92 backdrop-blur-xl border-b border-black/5">
         <div className="flex items-center gap-3">
           <BackButton />
           <form onSubmit={handleSearchSubmit} className="flex-1 relative">

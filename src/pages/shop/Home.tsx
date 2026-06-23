@@ -64,7 +64,7 @@ export default function Home() {
   return (
     <div className="flex-1 flex flex-col bg-white animate-fade-up-enter pb-10">
       {/* Top Header Section */}
-      <div className="flex md:hidden items-center gap-2.5 px-4 sm:px-5 py-3 sticky top-0 bg-white/90 backdrop-blur-xl z-40 border-b border-[#e5e5e5]">
+      <div className="flex md:hidden items-center gap-2.5 px-4 sm:px-5 py-3 sticky top-0 bg-white/90 backdrop-blur-xl z-[70] border-b border-[#e5e5e5]">
         <div className="flex items-center gap-1.5 flex-1 select-none">
           <img
             src="https://i.ibb.co/G4BYJN9h/Gemini-Generated-Image-j1yadkj1yadkj1ya-removebg-preview.png"

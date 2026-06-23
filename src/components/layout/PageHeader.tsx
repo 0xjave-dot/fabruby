@@ -8,7 +8,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, left, right }: PageHeaderProps) {
   return (
-    <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sticky top-0 bg-white/92 backdrop-blur-xl z-50 border-b border-black/5">
+    <div className="sticky top-0 z-[70] flex-none flex items-center justify-between px-4 sm:px-5 py-3.5 bg-white/92 backdrop-blur-xl border-b border-black/5">
       <div className="w-[30%] flex items-center justify-start min-h-[30px]">{left}</div>
       <div className="flex-1 text-center font-display font-bold text-[16px] sm:text-[17px] text-dark leading-none truncate px-2">
         {title}

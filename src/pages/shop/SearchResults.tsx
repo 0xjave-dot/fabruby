@@ -74,7 +74,7 @@ export default function SearchResults() {
 
   return (
     <div className="flex-1 flex flex-col bg-white animate-fade-up-enter min-h-screen">
-      <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sticky top-0 bg-white/92 backdrop-blur-xl z-40 border-b border-black/5 gap-3">
+      <div className="sticky top-0 z-[70] flex-none flex items-center justify-between px-4 sm:px-5 py-3.5 bg-white/92 backdrop-blur-xl border-b border-black/5 gap-3">
         <BackButton />
         <button
           onClick={() => navigate("/search")}
