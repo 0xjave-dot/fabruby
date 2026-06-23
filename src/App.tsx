@@ -54,7 +54,7 @@ import About from "./pages/settings/About";
 
 // Chat Support Page
 import ChatSupport from "./pages/support/ChatSupport";
-import AdminPanel from "./pages/admin/AdminPanel";
+import AdminGate from "./pages/admin/AdminGate";
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -80,7 +80,7 @@ export default function App() {
                   <Route path="/register" element={<Register />} />
                   <Route path="/pin-verify" element={<PinVerify />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/adminpanel" element={user ? <AdminPanel /> : <Navigate to="/login" replace />} />
+                  <Route path="/adminpanel" element={<AdminGate />} />
                   <Route path="/admin" element={<Navigate to="/adminpanel" replace />} />
 
                   <Route element={<AppShell />}>
