@@ -708,7 +708,7 @@ export const products: Product[] = [
 // Let's ensure each category has exactly 70 items of high quality
 
 const dressImage = "https://dexstitches.com/image/cache/catalog/2024%20October/14TH/200/New%20Women%20Lace%20Dress%20Pink%20online%20shopping%20website%201-1080x1440.jpg";
-const twoPieceImage = "https://i.ibb.co/spTH6FJN/Gemini-Generated-Image-jn0hxojn0hxojn0h.png";
+const twoPieceImage = "https://i.ibb.co/G3CN15v9/Gemini-Generated-Image-g4v7uyg4v7uyg4v7.png";
 const shoesImage = "https://m.media-amazon.com/images/I/61C3dJuLiQL._AC_UF894,1000_QL80_.jpg";
 const bagsImage = "https://d21d281c1yd2en.cloudfront.net/media/product_images/6085a837-778d-4e08-9862-12f68a32ba09.jpeg";
 
