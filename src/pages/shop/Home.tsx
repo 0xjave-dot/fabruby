@@ -65,7 +65,7 @@ export default function Home() {
   return (
     <div className="flex-1 flex flex-col bg-white animate-fade-up-enter pb-10">
       {/* Top Header Section */}
-      <div className="sticky top-0 z-[90] flex md:hidden shrink-0 items-center gap-2.5 px-4 sm:px-5 py-2.5 bg-white/90 backdrop-blur-xl border-b border-[#e5e5e5] shadow-[0_4px_18px_rgba(0,0,0,0.04)]">
+      <div className="sticky top-0 z-[110] flex md:hidden shrink-0 items-center gap-2.5 px-4 sm:px-5 py-2.5 bg-white/90 backdrop-blur-xl border-b border-[#e5e5e5] shadow-[0_4px_18px_rgba(0,0,0,0.04)]">
         <div className="flex items-center gap-1.5 flex-1 select-none">
           <img
             src="https://i.ibb.co/G4BYJN9h/Gemini-Generated-Image-j1yadkj1yadkj1ya-removebg-preview.png"
@@ -99,9 +99,11 @@ export default function Home() {
         </ScrollReveal>
 
         {/* Today's Color Daily Drop Section */}
-        <ScrollReveal delay={0.05}>
-          <TodayColorSection />
-        </ScrollReveal>
+        <div className="sticky top-[3.75rem] z-[100] -mx-4 sm:-mx-5 px-4 sm:px-5 py-3 bg-white/92 backdrop-blur-xl border-b border-[#e5e5e5] md:static md:mx-0 md:px-0 md:py-0 md:bg-transparent md:backdrop-blur-0 md:border-0">
+          <ScrollReveal delay={0.05}>
+            <TodayColorSection />
+          </ScrollReveal>
+        </div>
 
         {/* Categories Circular Quick Hub */}
         <ScrollReveal delay={0.08} className="py-2.5 flex justify-center w-full">

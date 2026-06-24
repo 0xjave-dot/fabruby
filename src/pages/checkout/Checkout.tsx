@@ -8,6 +8,60 @@ import { useSettings } from "../../context/SettingsContext";
 import { useToast } from "../../context/ToastContext";
 import { decodeSharedBag, encodeSharedBag } from "../../lib/sharedBag";
 
+function renderBagLineItem({
+  image,
+  name,
+  size,
+  color,
+  qty,
+  price,
+  currencySymbol,
+}: {
+  image: string;
+  name: string;
+  size: string;
+  color: string;
+  qty: number;
+  price: number;
+  currencySymbol: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-[18px] border border-gray3/40 bg-white p-3">
+      <img
+        src={image}
+        alt={name}
+        className="h-[74px] w-[58px] rounded-[14px] object-cover bg-gray flex-shrink-0 border border-black/[0.04]"
+      />
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h4 className="font-display font-extrabold text-[13.5px] text-dark leading-tight line-clamp-1">
+              {name}
+            </h4>
+            <p className="mt-1 font-sans text-[11.5px] text-gray2">
+              Size {size} · Qty {qty}
+            </p>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <div className="font-display font-bold text-[13px] text-dark">
+              {currencySymbol}
+              {(price * qty).toFixed(2)}
+            </div>
+            <div className="mt-1 flex items-center justify-end gap-1.5 text-[10px] text-gray2">
+              <span
+                className="inline-block h-2.5 w-2.5 rounded-full border border-gray2/40"
+                style={{ backgroundColor: color }}
+              />
+              <span className="uppercase tracking-[0.18em]">{color}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Checkout() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -25,6 +79,8 @@ export default function Checkout() {
     [sharedBagParam]
   );
   const importedBagRef = useRef<string | null>(null);
+  const sharedBagItems = sharedBagPayload?.items ?? items;
+  const isSharedBagCheckout = Boolean(sharedBagPayload?.items?.length);
 
   const defaultAddress = account.shippingAddresses.items.find((address) => address.isDefault) ?? account.shippingAddresses.items[0];
   const isGuest = !firebaseUser;
@@ -75,7 +131,7 @@ export default function Checkout() {
 
   const handlePayment = () => {
     if (checkoutMode === "gift" && !giftRecipientName.trim()) {
-      pushToast("Please add the gift recipient’s name before continuing.");
+      pushToast("Please add the gift recipient's name before continuing.");
       return;
     }
 
@@ -130,6 +186,40 @@ export default function Checkout() {
       <div className="p-4 sm:p-5 lg:p-6 xl:p-8 flex-1">
         <div className="mx-auto w-full max-w-6xl grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_420px] items-start">
           <div className="space-y-6">
+            {isSharedBagCheckout && (
+              <div className="rounded-[28px] border border-blue/15 bg-blue-light/20 shadow-subtle overflow-hidden">
+                <div className="border-b border-blue/10 px-5 py-4 flex items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-display font-black text-sm tracking-tight text-dark">
+                      Shared bag preview
+                    </h3>
+                    <p className="font-sans text-xs text-gray2 mt-1">
+                      This checkout was opened from a shared bag link. Review the items below before continuing.
+                    </p>
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-[0.18em] text-blue">
+                    {sharedBagItems.reduce((sum, item) => sum + item.qty, 0)} items
+                  </span>
+                </div>
+
+                <div className="p-5 space-y-3">
+                  {sharedBagItems.map((item) => (
+                    <div key={`${item.productId}-${item.size}-${item.color}`}>
+                      {renderBagLineItem({
+                        image: item.image,
+                        name: item.name,
+                        size: item.size,
+                        color: item.color,
+                        qty: item.qty,
+                        price: item.price,
+                        currencySymbol,
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="rounded-[28px] border border-black/[0.05] bg-white shadow-subtle overflow-hidden">
               <div className="border-b border-gray3/30 px-5 py-4 flex items-center justify-between">
                 <div>
@@ -368,6 +458,32 @@ export default function Checkout() {
               >
                 {isSharingBag ? "Preparing share..." : sharedWithLovedOne ? "Bag shared" : "Share shopping bag"}
               </button>
+            </div>
+
+            <div className="rounded-[28px] border border-black/[0.05] bg-white shadow-subtle overflow-hidden">
+              <div className="border-b border-gray3/30 px-5 py-4">
+                <h3 className="font-display font-black text-sm tracking-tight text-dark">
+                  Items in this order
+                </h3>
+                <p className="font-sans text-xs text-gray2 mt-1">
+                  A visual check of what will be paid for.
+                </p>
+              </div>
+              <div className="p-5 space-y-3">
+                {items.map((item) => (
+                  <div key={`${item.productId}-${item.size}-${item.color}`}>
+                    {renderBagLineItem({
+                      image: item.image,
+                      name: item.name,
+                      size: item.size,
+                      color: item.color,
+                      qty: item.qty,
+                      price: item.price,
+                      currencySymbol,
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
 
             <button
