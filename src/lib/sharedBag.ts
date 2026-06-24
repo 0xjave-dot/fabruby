@@ -1,14 +1,6 @@
 import { products } from "../data/products";
 import type { CartItem } from "../context/CartContext";
 
-type SharedBagItemTuple = [productId: string, size: string, color: string, qty: number];
-
-interface SharedBagV2Payload {
-  v: 2;
-  i: SharedBagItemTuple[];
-  m?: "g";
-}
-
 interface LegacySharedBagPayload {
   items?: CartItem[];
   checkoutMode?: "self" | "gift";
@@ -23,45 +15,54 @@ export interface DecodedSharedBag {
   giftMessage: string;
 }
 
-const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder();
+function cartItemToToken(item: CartItem) {
+  const productIndex = products.findIndex((product) => product.id === item.productId);
 
-function toBase64Url(value: string) {
-  const base64 = btoa(value);
-  return base64.replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
-}
-
-function fromBase64Url(value: string) {
-  const padded = value.replaceAll("-", "+").replaceAll("_", "/");
-  const fixed = padded + "=".repeat((4 - (padded.length % 4)) % 4);
-  return atob(fixed);
-}
-
-function cartItemToTuple(item: CartItem): SharedBagItemTuple {
-  return [item.productId, item.size, item.color, item.qty];
-}
-
-function tupleToCartItem(tuple: unknown): CartItem | null {
-  if (!Array.isArray(tuple) || tuple.length < 4) {
+  if (productIndex < 0) {
     return null;
   }
 
-  const [productId, size, color, qty] = tuple;
+  const product = products[productIndex];
+  const sizeIndex = product.sizes.indexOf(item.size);
+  const colorIndex = product.colors.indexOf(item.color);
+
+  if (sizeIndex < 0 || colorIndex < 0) {
+    return null;
+  }
+
+  return [productIndex.toString(36), sizeIndex.toString(36), colorIndex.toString(36), item.qty.toString(36)].join(".");
+}
+
+function tokenToCartItem(token: string): CartItem | null {
+  const parts = token.split(".");
+  if (parts.length !== 4) {
+    return null;
+  }
+
+  const [productIndexToken, sizeIndexToken, colorIndexToken, qtyToken] = parts;
+  const productIndex = Number.parseInt(productIndexToken, 36);
+  const sizeIndex = Number.parseInt(sizeIndexToken, 36);
+  const colorIndex = Number.parseInt(colorIndexToken, 36);
+  const qty = Number.parseInt(qtyToken, 36);
 
   if (
-    typeof productId !== "string" ||
-    typeof size !== "string" ||
-    typeof color !== "string" ||
-    typeof qty !== "number" ||
-    !Number.isFinite(qty) ||
+    !Number.isInteger(productIndex) ||
+    !Number.isInteger(sizeIndex) ||
+    !Number.isInteger(colorIndex) ||
+    !Number.isInteger(qty) ||
+    productIndex < 0 ||
+    sizeIndex < 0 ||
+    colorIndex < 0 ||
     qty <= 0
   ) {
     return null;
   }
 
-  const product = products.find((entry) => entry.id === productId);
+  const product = products[productIndex];
+  const size = product?.sizes[sizeIndex];
+  const color = product?.colors[colorIndex];
 
-  if (!product) {
+  if (!product || !size || !color) {
     return null;
   }
 
@@ -116,32 +117,18 @@ function normalizeItems(items: unknown): CartItem[] {
 }
 
 export function encodeSharedBag(items: CartItem[], checkoutMode: "self" | "gift" = "self") {
-  const payload: SharedBagV2Payload = {
-    v: 2,
-    i: items.map(cartItemToTuple),
-    ...(checkoutMode === "gift" ? { m: "g" } : {}),
-  };
-
-  const json = JSON.stringify(payload);
-  const bytes = textEncoder.encode(json);
-  let binary = "";
-
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
-  }
-
-  return toBase64Url(binary);
+  const tokens = items.map(cartItemToToken).filter((token): token is string => Boolean(token));
+  return `${checkoutMode === "gift" ? "g" : "s"}~${tokens.join("-")}`;
 }
 
 export function decodeSharedBag(value: string): DecodedSharedBag | null {
   try {
-    const binary = fromBase64Url(value);
-    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-    const json = textDecoder.decode(bytes);
-    const parsed = JSON.parse(json) as Partial<SharedBagV2Payload & LegacySharedBagPayload>;
-
-    if (parsed.v === 2 && Array.isArray(parsed.i)) {
-      const items = parsed.i.map(tupleToCartItem).filter((item): item is CartItem => Boolean(item));
+    if (value.includes("~")) {
+      const [modeToken, itemsToken] = value.split("~");
+      const checkoutMode = modeToken === "g" ? "gift" : "self";
+      const items = itemsToken
+        ? itemsToken.split("-").map(tokenToCartItem).filter((item): item is CartItem => Boolean(item))
+        : [];
 
       if (items.length === 0) {
         return null;
@@ -149,11 +136,16 @@ export function decodeSharedBag(value: string): DecodedSharedBag | null {
 
       return {
         items,
-        checkoutMode: parsed.m === "g" ? "gift" : "self",
+        checkoutMode,
         giftRecipientName: "",
         giftMessage: "",
       };
     }
+
+    const padded = value.replaceAll("-", "+").replaceAll("_", "/");
+    const fixed = padded + "=".repeat((4 - (padded.length % 4)) % 4);
+    const decoded = atob(fixed);
+    const parsed = JSON.parse(decoded) as Partial<LegacySharedBagPayload>;
 
     if (!Array.isArray(parsed.items)) {
       return null;

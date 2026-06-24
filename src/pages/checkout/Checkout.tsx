@@ -19,34 +19,20 @@ export default function Checkout() {
   const [giftMessage, setGiftMessage] = useState("");
   const [isSharingBag, setIsSharingBag] = useState(false);
   const [sharedWithLovedOne, setSharedWithLovedOne] = useState(false);
-  const sharedBagParam = searchParams.get("bag") || "";
+  const sharedBagParam = searchParams.get("s") || searchParams.get("bag") || "";
   const sharedBagPayload = useMemo(
     () => (sharedBagParam ? decodeSharedBag(sharedBagParam) : null),
     [sharedBagParam]
   );
-  const isSharedBag = Boolean(sharedBagPayload?.items?.length);
   const importedBagRef = useRef<string | null>(null);
 
   const defaultAddress = account.shippingAddresses.items.find((address) => address.isDefault) ?? account.shippingAddresses.items[0];
   const isGuest = !firebaseUser;
   const shareBagUrl = useMemo(
-    () => `${window.location.origin}/checkout?share=1&bag=${encodeSharedBag(items, checkoutMode)}`,
+    () => `${window.location.origin}/checkout?share=1&s=${encodeSharedBag(items, checkoutMode)}`,
     [checkoutMode, items]
   );
-  const bagShareText = useMemo(() => {
-    const itemSummary = items
-      .map((item) => `${item.qty}x ${item.name}`)
-      .join(", ");
-
-    return [
-      `I’ve put together a Fabruby bag for ${checkoutMode === "gift" ? "gift checkout" : "self checkout"}.`,
-      itemSummary ? `Items: ${itemSummary}.` : "Items: see the cart.",
-      `Total: ${currencySymbol}${total.toFixed(2)}.`,
-      `Open this link to review and pay: ${shareBagUrl}`,
-    ]
-      .filter(Boolean)
-      .join(" ");
-  }, [checkoutMode, currencySymbol, items, shareBagUrl, total]);
+  const bagShareText = useMemo(() => `Open this bag: ${shareBagUrl}`, [shareBagUrl]);
 
   useEffect(() => {
     if (!sharedBagPayload?.items?.length) {
