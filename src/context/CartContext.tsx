@@ -17,6 +17,7 @@ export interface CartItem {
 interface CartContextType {
   items: CartItem[];
   addItem: (item: Omit<CartItem, "qty"> & { qty?: number }) => void;
+  replaceCart: (items: CartItem[], appliedVoucherCode?: string | null) => void;
   updateQty: (productId: string, size: string, color: string, qty: number) => void;
   removeItem: (productId: string, size: string, color: string) => void;
   clearCart: () => void;
@@ -183,6 +184,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     persistCart(updateCartDoc(cart, { items: nextItems, appliedVoucherCode: cart.appliedVoucherCode }));
   };
 
+  const replaceCart = (nextItems: CartItem[], appliedVoucherCode: string | null = cart.appliedVoucherCode) => {
+    persistCart(updateCartDoc(cart, { items: nextItems.map((item) => ({ ...item })), appliedVoucherCode }));
+  };
+
   const updateQty = (productId: string, size: string, color: string, qty: number) => {
     if (qty <= 0) {
       removeItem(productId, size, color);
@@ -244,6 +249,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       value={{
         items,
         addItem,
+        replaceCart,
         updateQty,
         removeItem,
         clearCart,

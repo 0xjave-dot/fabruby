@@ -1,22 +1,31 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ShieldCheck, MapPin, ChevronRight, AlertCircle, Gift, User, Send } from "lucide-react";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BackButton } from "../../components/layout/BackButton";
 import { useCart } from "../../context/CartContext";
 import { useSettings } from "../../context/SettingsContext";
 import { useToast } from "../../context/ToastContext";
+import { decodeSharedBag, encodeSharedBag } from "../../lib/sharedBag";
 
 export default function Checkout() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { pushToast } = useToast();
   const { currencySymbol, userProfile, account, firebaseUser } = useSettings();
-  const { items, appliedVoucher, subtotal, discountAmount, shippingFee, total } = useCart();
+  const { items, appliedVoucher, subtotal, discountAmount, shippingFee, total, replaceCart } = useCart();
   const [checkoutMode, setCheckoutMode] = useState<"self" | "gift">("self");
   const [giftRecipientName, setGiftRecipientName] = useState("");
   const [giftMessage, setGiftMessage] = useState("");
   const [isSharingBag, setIsSharingBag] = useState(false);
   const [sharedWithLovedOne, setSharedWithLovedOne] = useState(false);
+  const sharedBagParam = searchParams.get("bag") || "";
+  const sharedBagPayload = useMemo(
+    () => (sharedBagParam ? decodeSharedBag(sharedBagParam) : null),
+    [sharedBagParam]
+  );
+  const isSharedBag = Boolean(sharedBagPayload?.items?.length);
+  const importedBagRef = useRef<string | null>(null);
 
   const defaultAddress = account.shippingAddresses.items.find((address) => address.isDefault) ?? account.shippingAddresses.items[0];
   const isGuest = !firebaseUser;
@@ -39,11 +48,44 @@ export default function Checkout() {
       `Total: ${currencySymbol}${total.toFixed(2)}.`,
       recipientLine,
       messageLine,
-      `Open this link to review and pay: ${window.location.origin}/checkout`,
+      `Open this link to review and pay: ${window.location.origin}/checkout?share=1&bag=${encodeSharedBag({
+        items,
+        checkoutMode,
+        giftRecipientName: giftRecipientName.trim(),
+        giftMessage: giftMessage.trim(),
+      })}`,
     ]
       .filter(Boolean)
       .join(" ");
   }, [checkoutMode, currencySymbol, giftMessage, giftRecipientName, items, total]);
+
+  useEffect(() => {
+    if (!sharedBagPayload?.items?.length) {
+      return;
+    }
+
+    if (importedBagRef.current === sharedBagParam) {
+      return;
+    }
+
+    replaceCart(sharedBagPayload.items, null);
+
+    if (sharedBagPayload.checkoutMode) {
+      setCheckoutMode(sharedBagPayload.checkoutMode);
+    }
+
+    if (sharedBagPayload.giftRecipientName) {
+      setGiftRecipientName(sharedBagPayload.giftRecipientName);
+    }
+
+    if (sharedBagPayload.giftMessage) {
+      setGiftMessage(sharedBagPayload.giftMessage);
+    }
+
+    setSharedWithLovedOne(true);
+    importedBagRef.current = sharedBagParam;
+    pushToast("Shared bag loaded.");
+  }, [pushToast, replaceCart, sharedBagParam, sharedBagPayload]);
 
   if (items.length === 0) {
     return (
@@ -86,7 +128,12 @@ export default function Checkout() {
         await navigator.share({
           title: "Fabruby bag",
           text,
-          url: `${window.location.origin}/checkout`,
+          url: `${window.location.origin}/checkout?share=1&bag=${encodeSharedBag({
+            items,
+            checkoutMode,
+            giftRecipientName: giftRecipientName.trim(),
+            giftMessage: giftMessage.trim(),
+          })}`,
         });
         setSharedWithLovedOne(true);
         return;
