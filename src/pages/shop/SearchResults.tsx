@@ -20,7 +20,7 @@ export default function SearchResults() {
   const [quickFilter, setQuickFilter] = useState("all");
   const [filters, setFilters] = useState<FilterState>({
     category: "all",
-    maxPrice: 100,
+    maxPrice: 100000,
     size: "",
     color: "",
     sortBy: "popular",
@@ -145,7 +145,7 @@ export default function SearchResults() {
                 setQuickFilter("all");
                 setFilters({
                   category: "all",
-                  maxPrice: 100,
+                  maxPrice: 100000,
                   size: "",
                   color: "",
                   sortBy: "popular",
