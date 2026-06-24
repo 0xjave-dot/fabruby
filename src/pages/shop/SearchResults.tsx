@@ -6,52 +6,7 @@ import { ProductCard } from "../../components/common/ProductCard";
 import { EmptyState } from "../../components/common/EmptyState";
 import { FilterSheet, FilterState } from "../../components/common/FilterSheet";
 import { products } from "../../data/products";
-
-type ImageSearchState = {
-  preview: string;
-  dominantColor: string;
-  label: string;
-  queryHint: string;
-};
-
-function parseRgb(rgb: string) {
-  const match = rgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/i);
-  if (!match) {
-    return null;
-  }
-
-  return {
-    r: Number(match[1]),
-    g: Number(match[2]),
-    b: Number(match[3]),
-  };
-}
-
-function hexToRgb(hex: string) {
-  const normalized = hex.replace("#", "");
-  if (normalized.length !== 6) {
-    return null;
-  }
-
-  const value = Number.parseInt(normalized, 16);
-  if (Number.isNaN(value)) {
-    return null;
-  }
-
-  return {
-    r: (value >> 16) & 255,
-    g: (value >> 8) & 255,
-    b: value & 255,
-  };
-}
-
-function colorDistance(a: { r: number; g: number; b: number }, b: { r: number; g: number; b: number }) {
-  return Math.sqrt(
-    (a.r - b.r) * (a.r - b.r) +
-      (a.g - b.g) * (a.g - b.g) +
-      (a.b - b.b) * (a.b - b.b)
-  );
-}
+import type { ImageSearchResult } from "../../lib/imageSearch";
 
 export default function SearchResults() {
   const navigate = useNavigate();
@@ -59,8 +14,7 @@ export default function SearchResults() {
   const [searchParams] = useSearchParams();
   const rawQuery = searchParams.get("q") || "";
   const query = rawQuery.trim().toLowerCase();
-  const imageSearch = (location.state as { imageSearch?: ImageSearchState } | null)?.imageSearch ?? null;
-  const imageSearchColor = imageSearch ? parseRgb(imageSearch.dominantColor) : null;
+  const imageSearch = (location.state as { imageSearch?: ImageSearchResult } | null)?.imageSearch ?? null;
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [quickFilter, setQuickFilter] = useState("all");
@@ -75,19 +29,27 @@ export default function SearchResults() {
   const filteredProducts = useMemo(() => {
     let list = [...products];
 
-    if (imageSearchColor) {
-      list = list
-        .map((product) => {
-          const primaryColor = product.colorTag || product.colors[0] || "#808080";
-          const productColor = hexToRgb(primaryColor) ?? { r: 128, g: 128, b: 128 };
+    if (imageSearch?.matches?.length) {
+      const rankedProducts = new Map(
+        imageSearch.matches.map((match, index) => [match.productId, { ...match, index }])
+      );
 
-          return {
-            product,
-            score: colorDistance(imageSearchColor, productColor),
-          };
-        })
-        .sort((a, b) => a.score - b.score)
-        .map(({ product }) => product);
+      list = list
+        .filter((product) => rankedProducts.has(product.id))
+        .sort((a, b) => {
+          const left = rankedProducts.get(a.id);
+          const right = rankedProducts.get(b.id);
+
+          if (!left || !right) {
+            return 0;
+          }
+
+          if (right.score !== left.score) {
+            return right.score - left.score;
+          }
+
+          return left.index - right.index;
+        });
     } else if (query) {
       list = list.filter(
         (p) =>
@@ -125,12 +87,12 @@ export default function SearchResults() {
       list.sort((a, b) => b.price - a.price);
     } else if (filters.sortBy === "newest") {
       list.sort((a, b) => (b.tags?.includes("New") ? 1 : 0) - (a.tags?.includes("New") ? 1 : 0));
-    } else if (!imageSearchColor) {
+    } else if (!imageSearch) {
       list.sort((a, b) => b.rating - a.rating);
     }
 
     return list;
-  }, [imageSearchColor, query, quickFilter, filters]);
+  }, [imageSearch, query, quickFilter, filters]);
 
   const quickOptions = ["all", "new", "sale", "popular"];
 
@@ -208,9 +170,11 @@ export default function SearchResults() {
                 Image search
               </p>
               <p className="truncate font-display text-[14px] font-semibold text-dark">
-                Matching by visual tone
+                {imageSearch.provider === "gemini" ? "Gemini visual match" : "Local visual fallback"}
               </p>
-              <p className="text-xs text-gray2">Detected {imageSearch.label} from your photo.</p>
+              <p className="text-xs text-gray2">
+                {imageSearch.summary}
+              </p>
             </div>
           </div>
         )}

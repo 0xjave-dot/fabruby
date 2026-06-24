@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Heart, ShoppingBag, Star, Share2, Plus, Minus, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BackButton } from "../../components/layout/BackButton";
@@ -10,9 +10,20 @@ import { useToast } from "../../context/ToastContext";
 import { useSettings } from "../../context/SettingsContext";
 import { DetailSkeleton } from "../../components/common/Skeleton";
 
+function upsertMetaTag(selector: string, attrName: "property" | "name", attrValue: string, content: string) {
+  let tag = document.head.querySelector(selector) as HTMLMetaElement | null;
+  if (!tag) {
+    tag = document.createElement("meta");
+    tag.setAttribute(attrName, attrValue);
+    document.head.appendChild(tag);
+  }
+  tag.setAttribute("content", content);
+}
+
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { addItem, items: cartItems } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { pushToast } = useToast();
@@ -53,11 +64,51 @@ export default function ProductDetail() {
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
 
   const isLiked = product ? isInWishlist(product.id) : false;
+  const isSharedPreview = new URLSearchParams(location.search).get("share") === "1";
+  const pageShellClass = isSharedPreview
+    ? "flex-1 flex flex-col bg-[radial-gradient(circle_at_top,_#f7fbff_0%,_#eef4fb_48%,_#e9eef6_100%)] animate-fade-up-enter min-h-screen relative pb-[86px]"
+    : "flex-1 flex flex-col bg-white animate-fade-up-enter min-h-screen relative pb-[86px]";
+  const contentShellClass = isSharedPreview
+    ? "mx-auto w-full max-w-[860px] p-3 sm:p-4 md:p-5"
+    : "p-5";
 
   useEffect(() => {
     setActiveImageIndex(0);
     setIsImageViewerOpen(false);
   }, [id]);
+
+  useEffect(() => {
+    if (!product) {
+      return;
+    }
+
+    const previousTitle = document.title;
+    const previousOgTitle = document.head.querySelector('meta[property="og:title"]')?.getAttribute("content") ?? "";
+    const previousOgDescription = document.head.querySelector('meta[property="og:description"]')?.getAttribute("content") ?? "";
+    const previousOgImage = document.head.querySelector('meta[property="og:image"]')?.getAttribute("content") ?? "";
+    const previousTwitterTitle = document.head.querySelector('meta[name="twitter:title"]')?.getAttribute("content") ?? "";
+    const previousTwitterDescription = document.head.querySelector('meta[name="twitter:description"]')?.getAttribute("content") ?? "";
+    const previousTwitterImage = document.head.querySelector('meta[name="twitter:image"]')?.getAttribute("content") ?? "";
+
+    document.title = `${product.name} | Fabruby`;
+    upsertMetaTag('meta[property="og:title"]', "property", "og:title", product.name);
+    upsertMetaTag('meta[property="og:description"]', "property", "og:description", product.description);
+    upsertMetaTag('meta[property="og:image"]', "property", "og:image", product.images[0]);
+    upsertMetaTag('meta[name="twitter:card"]', "name", "twitter:card", "summary_large_image");
+    upsertMetaTag('meta[name="twitter:title"]', "name", "twitter:title", product.name);
+    upsertMetaTag('meta[name="twitter:description"]', "name", "twitter:description", product.description);
+    upsertMetaTag('meta[name="twitter:image"]', "name", "twitter:image", product.images[0]);
+
+    return () => {
+      document.title = previousTitle;
+      upsertMetaTag('meta[property="og:title"]', "property", "og:title", previousOgTitle);
+      upsertMetaTag('meta[property="og:description"]', "property", "og:description", previousOgDescription);
+      upsertMetaTag('meta[property="og:image"]', "property", "og:image", previousOgImage);
+      upsertMetaTag('meta[name="twitter:title"]', "name", "twitter:title", previousTwitterTitle);
+      upsertMetaTag('meta[name="twitter:description"]', "name", "twitter:description", previousTwitterDescription);
+      upsertMetaTag('meta[name="twitter:image"]', "name", "twitter:image", previousTwitterImage);
+    };
+  }, [product]);
 
   if (!product) {
     return (
@@ -93,15 +144,42 @@ export default function ProductDetail() {
     pushToast(`Added ${quantity}x to Bag! 🛍️`);
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
+    const productUrl = `${window.location.origin}/product/${product.id}?share=1`;
+    const sharePayload = {
+      title: product.name,
+      text: `${productUrl}\n${product.name}\n${currencySymbol}${product.price.toFixed(2)}`,
+      url: productUrl,
+    };
+
+    try {
+      const imageResponse = await fetch(product.images[0], { mode: "cors" });
+      const imageBlob = await imageResponse.blob();
+      const mimeType = imageBlob.type || "image/jpeg";
+      const extension = mimeType.split("/")[1] || "jpg";
+      const shareFile = new File([imageBlob], `${product.id}.${extension}`, { type: mimeType });
+
+      if (navigator.share && navigator.canShare?.({ files: [shareFile] })) {
+        await navigator.share({
+          ...sharePayload,
+          files: [shareFile],
+        });
+        return;
+      }
+    } catch {
+      // Fall back to the text-only share path below.
+    }
+
     if (navigator.share) {
-      navigator.share({
-        title: product.name,
-        text: product.description,
-        url: window.location.href
-      }).catch(console.error);
-    } else {
+      navigator.share(sharePayload).catch(console.error);
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(`${productUrl}\n${product.name}\n${currencySymbol}${product.price.toFixed(2)}`);
       pushToast("Link copied to clipboard! 🔗");
+    } catch {
+      pushToast("Sharing is not available in this browser.");
     }
   };
 
@@ -117,10 +195,10 @@ export default function ProductDetail() {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-white animate-fade-up-enter min-h-screen relative pb-[86px]">
+    <div className={pageShellClass}>
       {/* Product Header */}
       <PageHeader
-        title="Product Detail"
+        title={isSharedPreview ? "Shared Preview" : "Product Detail"}
         left={<BackButton />}
         right={
           <div className="flex items-center gap-2">
@@ -148,18 +226,44 @@ export default function ProductDetail() {
       {isLoading ? (
         <DetailSkeleton />
       ) : (
-        <div className="flex flex-col md:flex-row md:items-start md:gap-8 p-5">
-          {/* Main image gallery card */}
-          <div className="w-full md:w-[45%] space-y-3 flex-shrink-0">
-            <div className="group relative aspect-[4/5] md:aspect-square bg-gray flex items-center justify-center max-h-[360px] md:max-h-[500px] overflow-hidden border border-black/5 md:rounded-2xl shadow-subtle cursor-zoom-in">
+        <div className={contentShellClass}>
+          <div className={isSharedPreview ? "rounded-[30px] border border-black/5 bg-white/92 p-3 sm:p-4 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl" : ""}>
+            {isSharedPreview && (
+              <div className="mb-3 flex items-center justify-between gap-3 rounded-[22px] border border-blue/12 bg-gradient-to-r from-blue-light/35 to-white px-4 py-3">
+                <div className="min-w-0">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-blue/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.22em] text-blue">
+                    Shared preview
+                  </div>
+                  <h2 className="mt-2 font-display text-[20px] font-black tracking-tight text-dark sm:text-[22px]">
+                    {product.name}
+                  </h2>
+                  <p className="mt-1 max-w-[34rem] font-sans text-[12.5px] leading-relaxed text-gray2">
+                    Tap through to view details, or share the link to let someone open the product with the right preview image.
+                  </p>
+                </div>
+                <div className="hidden shrink-0 rounded-[18px] bg-white px-3 py-2 text-right shadow-sm sm:block">
+                  <div className="font-display text-[10px] font-black uppercase tracking-[0.2em] text-gray2">
+                    From
+                  </div>
+                  <div className="mt-0.5 font-display text-[13px] font-bold text-blue">
+                    Fabruby
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col md:flex-row md:items-start md:gap-8">
+              {/* Main image gallery card */}
+              <div className="w-full md:w-[45%] space-y-3 flex-shrink-0">
+              <div className="group relative aspect-[4/5] md:aspect-square bg-gray flex items-center justify-center max-h-[320px] md:max-h-[440px] overflow-hidden border border-black/5 rounded-[24px] shadow-subtle cursor-zoom-in">
               <img
                 src={activeImage}
                 alt={product.name}
-                className="w-full h-full object-cover transition-transform duration-300 rounded-b-md md:rounded-2xl"
+                className="w-full h-full object-cover transition-transform duration-300"
                 onClick={openImageViewer}
               />
               {product.compareAtPrice && product.compareAtPrice > product.price && (
-                <div className="absolute top-4 left-4 bg-gradient-to-l from-pink to-red text-white font-display text-[11px] font-bold px-3 py-1 rounded-md shadow-md">
+                <div className="absolute top-3 left-3 bg-gradient-to-l from-pink to-red text-white font-display text-[11px] font-bold px-3 py-1 rounded-full shadow-md">
                   Sale Offer
                 </div>
               )}
@@ -185,10 +289,10 @@ export default function ProductDetail() {
                 </button>
               ))}
             </div>
-          </div>
+              </div>
 
-          {/* Info & selectors column */}
-          <div className="flex-grow flex flex-col justify-between space-y-5 pt-4 md:pt-0">
+              {/* Info & selectors column */}
+              <div className="flex-grow flex flex-col justify-between space-y-5 pt-4 md:pt-0">
           {/* Title, rating, prices */}
           <div>
             <div className="flex justify-between items-start gap-4">
@@ -318,7 +422,9 @@ export default function ProductDetail() {
               </button>
             </div>
           </div>
-        </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

@@ -37,6 +37,10 @@ export interface Order {
   estDelivery: string;
   shippingAddress: ShippingAddress;
   paymentMethod: string;
+  checkoutMode?: "self" | "gift";
+  giftRecipientName?: string;
+  giftMessage?: string;
+  sharedWithLovedOne?: boolean;
 }
 
 export interface Review {
@@ -140,6 +144,10 @@ function normalizeOrder(order: Order): Order {
     ...order,
     items: order.items.map((item) => ({ ...item })),
     shippingAddress: normalizeAddress(order.shippingAddress),
+    checkoutMode: order.checkoutMode ?? "self",
+    giftRecipientName: order.giftRecipientName ?? "",
+    giftMessage: order.giftMessage ?? "",
+    sharedWithLovedOne: Boolean(order.sharedWithLovedOne),
   };
 }
 

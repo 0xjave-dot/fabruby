@@ -31,6 +31,24 @@ Create a production build with:
 
 `npm run build`
 
+## Share preview server
+
+To serve product URLs with server-rendered Open Graph tags for WhatsApp, iMessage, and X:
+
+1. Build the app:
+   `npm run build`
+2. Start the preview server:
+   `npm run server`
+3. Share product links in the form `https://your-domain.com/product/<product-id>?share=1`
+
+The server injects product-specific `og:image`, `og:title`, and `twitter:image` tags for `/product/:id?share=1`.
+
+## Live deploy path
+
+The repo includes [`render.yaml`](C:/Users/HP/Desktop/edge/Fab%20-%20Copy/render.yaml) for deploying the share-preview server on Render.
+
+Set `APP_URL` in Render to the public base URL of the service, then the shared product links will resolve with the correct metadata.
+
 ## Firebase deploy
 
 The repo now includes a minimal `firebase.json` so the standard Firebase CLI picks up Firestore and Storage rules together:

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import { useOrders } from "../../context/OrdersContext";
@@ -10,6 +11,7 @@ import { saveGuestOrder } from "../../lib/guestOrders";
 
 export default function PaymentProcessing() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { pushToast } = useToast();
   const { items, subtotal, discountAmount, shippingFee, total, clearCart } = useCart();
   const { placeOrder } = useOrders();
@@ -55,6 +57,17 @@ export default function PaymentProcessing() {
         isDefault: true,
       };
 
+      const checkoutState = (location.state as {
+        checkoutMode?: "self" | "gift";
+        giftRecipientName?: string;
+        giftMessage?: string;
+        sharedWithLovedOne?: boolean;
+      } | null) ?? null;
+      const checkoutMode = checkoutState?.checkoutMode ?? "self";
+      const giftRecipientName = checkoutState?.giftRecipientName ?? "";
+      const giftMessage = checkoutState?.giftMessage ?? "";
+      const sharedWithLovedOne = Boolean(checkoutState?.sharedWithLovedOne);
+
       const orderPayload: Omit<Order, "id" | "date" | "estDelivery"> = {
         items,
         subtotal,
@@ -64,6 +77,10 @@ export default function PaymentProcessing() {
         status: "placed",
         shippingAddress,
         paymentMethod: "Paystack demo",
+        checkoutMode,
+        giftRecipientName,
+        giftMessage,
+        sharedWithLovedOne,
       };
 
       const createdOrder = firebaseUser
@@ -92,7 +109,7 @@ export default function PaymentProcessing() {
     };
 
     void finalizePayment();
-  }, [progress, items, subtotal, discountAmount, shippingFee, total, placeOrder, clearCart, pushToast, navigate, firebaseUser, userProfile.name]);
+  }, [progress, items, subtotal, discountAmount, shippingFee, total, placeOrder, clearCart, pushToast, navigate, firebaseUser, userProfile.name, location.state]);
 
   return (
     <div className="flex-1 flex flex-col bg-white justify-center items-center p-6 text-center animate-fade-up-enter min-h-screen">

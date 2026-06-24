@@ -20,6 +20,9 @@ export default function PaymentSuccess() {
   const displayTotal = order?.total ?? 0;
   const displayEst = order?.estDelivery ?? "Delivery details pending";
   const paymentLabel = order?.paymentMethod ?? "Paystack";
+  const checkoutLabel = order?.checkoutMode === "gift"
+    ? `Gift for ${order.giftRecipientName || "someone special"}`
+    : "For yourself";
 
   return (
     <div className="flex-1 flex flex-col bg-white justify-center items-center p-6 text-center animate-fade-up-enter min-h-screen">
@@ -41,10 +44,26 @@ export default function PaymentSuccess() {
         </div>
 
         <div className="bg-gray rounded-std p-4 border border-black/[0.03] w-full text-left space-y-3.5 mb-8">
+          <div className="flex justify-between items-center text-xs gap-4">
+            <span className="font-sans text-gray2 flex-shrink-0">Checkout</span>
+            <span className="font-display font-bold text-dark text-right leading-tight max-w-[150px]">
+              {checkoutLabel}
+            </span>
+          </div>
+
           <div className="flex justify-between items-center text-xs">
             <span className="font-sans text-gray2">Order ID</span>
             <span className="font-display font-bold text-dark">{displayId}</span>
           </div>
+
+          {order?.sharedWithLovedOne && (
+            <div className="flex justify-between items-center text-xs gap-4">
+              <span className="font-sans text-gray2 flex-shrink-0">Shared</span>
+              <span className="font-display font-bold text-dark text-right leading-tight max-w-[150px]">
+                Loved one payment link sent
+              </span>
+            </div>
+          )}
 
           <div className="flex justify-between items-start text-xs gap-4">
             <span className="font-sans text-gray2 flex-shrink-0">Est. Delivery</span>

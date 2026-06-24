@@ -1,5 +1,6 @@
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ShieldCheck, MapPin, ChevronRight, AlertCircle } from "lucide-react";
+import { ShieldCheck, MapPin, ChevronRight, AlertCircle, Gift, User, Send } from "lucide-react";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BackButton } from "../../components/layout/BackButton";
 import { useCart } from "../../context/CartContext";
@@ -11,9 +12,38 @@ export default function Checkout() {
   const { pushToast } = useToast();
   const { currencySymbol, userProfile, account, firebaseUser } = useSettings();
   const { items, appliedVoucher, subtotal, discountAmount, shippingFee, total } = useCart();
+  const [checkoutMode, setCheckoutMode] = useState<"self" | "gift">("self");
+  const [giftRecipientName, setGiftRecipientName] = useState("");
+  const [giftMessage, setGiftMessage] = useState("");
+  const [isSharingBag, setIsSharingBag] = useState(false);
+  const [sharedWithLovedOne, setSharedWithLovedOne] = useState(false);
 
   const defaultAddress = account.shippingAddresses.items.find((address) => address.isDefault) ?? account.shippingAddresses.items[0];
   const isGuest = !firebaseUser;
+  const bagShareText = useMemo(() => {
+    const itemSummary = items
+      .map((item) => `${item.qty}x ${item.name}`)
+      .join(", ");
+
+    const checkoutLabel = checkoutMode === "gift" ? "gift checkout" : "self checkout";
+    const recipientLine = checkoutMode === "gift" && giftRecipientName.trim()
+      ? `Recipient: ${giftRecipientName.trim()}.`
+      : "";
+    const messageLine = checkoutMode === "gift" && giftMessage.trim()
+      ? `Note: ${giftMessage.trim()}`
+      : "";
+
+    return [
+      `I’ve put together a Fabruby bag for ${checkoutLabel}.`,
+      itemSummary ? `Items: ${itemSummary}.` : "Items: see the cart.",
+      `Total: ${currencySymbol}${total.toFixed(2)}.`,
+      recipientLine,
+      messageLine,
+      `Open this link to review and pay: ${window.location.origin}/checkout`,
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }, [checkoutMode, currencySymbol, giftMessage, giftRecipientName, items, total]);
 
   if (items.length === 0) {
     return (
@@ -27,8 +57,53 @@ export default function Checkout() {
   }
 
   const handlePayment = () => {
-    pushToast(isGuest ? "Continuing as guest to the demo payment step." : "Reviewing order and continuing to the demo payment step.");
-    navigate("/checkout/processing");
+    if (checkoutMode === "gift" && !giftRecipientName.trim()) {
+      pushToast("Please add the gift recipient’s name before continuing.");
+      return;
+    }
+
+    pushToast(
+      isGuest
+        ? "Continuing as guest to the demo payment step."
+        : "Reviewing order and continuing to the demo payment step."
+    );
+    navigate("/checkout/processing", {
+      state: {
+        checkoutMode,
+        giftRecipientName: giftRecipientName.trim(),
+        giftMessage: giftMessage.trim(),
+        sharedWithLovedOne,
+      },
+    });
+  };
+
+  const handleShareBag = async () => {
+    const text = bagShareText;
+
+    if (navigator.share) {
+      try {
+        setIsSharingBag(true);
+        await navigator.share({
+          title: "Fabruby bag",
+          text,
+          url: `${window.location.origin}/checkout`,
+        });
+        setSharedWithLovedOne(true);
+        return;
+      } catch {
+        // Fall through to clipboard.
+      } finally {
+        setIsSharingBag(false);
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setSharedWithLovedOne(true);
+      pushToast("Bag summary copied to clipboard.");
+    } catch {
+      pushToast("Could not share your bag right now.");
+    }
   };
 
   return (
@@ -180,6 +255,102 @@ export default function Checkout() {
                   </p>
                 </div>
               </div>
+            </div>
+
+            <div className="rounded-[28px] border border-black/[0.05] bg-white p-5 shadow-subtle">
+              <div className="flex items-start gap-3">
+                <div className="w-11 h-11 rounded-std bg-blue-light/40 flex items-center justify-center flex-shrink-0">
+                  <Gift className="w-5 h-5 text-blue" />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-display font-extrabold text-dark">Checkout mode</div>
+                  <p className="font-sans text-xs text-gray2 mt-0.5">
+                    Choose whether this bag is for you or being sent as a gift.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCheckoutMode("self")}
+                  className={`rounded-[16px] border px-3 py-3 text-left transition-all cursor-pointer ${
+                    checkoutMode === "self"
+                      ? "border-blue bg-blue-light/40"
+                      : "border-gray3 bg-white hover:bg-gray/50"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <User className={`h-4 w-4 ${checkoutMode === "self" ? "text-blue" : "text-gray2"}`} />
+                    <span className="font-display text-[13px] font-bold text-dark">For myself</span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-gray2">Standard checkout for your own order.</p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCheckoutMode("gift")}
+                  className={`rounded-[16px] border px-3 py-3 text-left transition-all cursor-pointer ${
+                    checkoutMode === "gift"
+                      ? "border-blue bg-blue-light/40"
+                      : "border-gray3 bg-white hover:bg-gray/50"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Gift className={`h-4 w-4 ${checkoutMode === "gift" ? "text-blue" : "text-gray2"}`} />
+                    <span className="font-display text-[13px] font-bold text-dark">As a gift</span>
+                  </div>
+                  <p className="mt-1 text-[11px] text-gray2">Package it for someone special.</p>
+                </button>
+              </div>
+
+              {checkoutMode === "gift" && (
+                <div className="mt-4 space-y-3">
+                  <label className="block">
+                    <span className="mb-1.5 block font-display text-xs font-bold text-dark">Gift recipient name</span>
+                    <input
+                      value={giftRecipientName}
+                      onChange={(e) => setGiftRecipientName(e.target.value)}
+                      placeholder="Who is this for?"
+                      className="w-full h-[48px] rounded-[14px] border border-gray3 bg-[#fbfbfb] px-4 font-sans text-sm outline-none transition focus:border-blue/30 focus:bg-white"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1.5 block font-display text-xs font-bold text-dark">Gift message</span>
+                    <textarea
+                      value={giftMessage}
+                      onChange={(e) => setGiftMessage(e.target.value)}
+                      placeholder="Write a short note to the recipient"
+                      rows={3}
+                      className="w-full rounded-[14px] border border-gray3 bg-[#fbfbfb] px-4 py-3 font-sans text-sm outline-none transition focus:border-blue/30 focus:bg-white resize-none"
+                    />
+                  </label>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-[28px] border border-black/[0.05] bg-white p-5 shadow-subtle">
+              <div className="flex items-start gap-3">
+                <div className="w-11 h-11 rounded-std bg-[#0f172a] flex items-center justify-center flex-shrink-0 text-white">
+                  <Send className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="font-display font-extrabold text-dark">Share bag</div>
+                  <p className="font-sans text-xs text-gray2 mt-0.5">
+                    Send your cart to someone who wants to pay for it.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleShareBag}
+                disabled={isSharingBag}
+                className="mt-4 w-full h-[52px] rounded-std border border-blue/15 bg-blue-light/30 font-display font-bold text-blue transition hover:bg-blue-light/50 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isSharingBag ? "Preparing share..." : sharedWithLovedOne ? "Bag shared" : "Share shopping bag"}
+              </button>
             </div>
 
             <button

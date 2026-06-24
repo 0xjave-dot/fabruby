@@ -42,6 +42,10 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
       estDelivery: formattedEstDelivery,
       shippingAddress,
       items: newOrder.items.map((item: CartItem) => ({ ...item })),
+      checkoutMode: newOrder.checkoutMode ?? "self",
+      giftRecipientName: newOrder.giftRecipientName ?? "",
+      giftMessage: newOrder.giftMessage ?? "",
+      sharedWithLovedOne: Boolean(newOrder.sharedWithLovedOne),
     };
 
     updateAccount({

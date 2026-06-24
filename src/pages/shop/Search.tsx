@@ -4,99 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { Search as SearchIcon, Clock, Camera } from "lucide-react";
 import { BackButton } from "../../components/layout/BackButton";
 import { useToast } from "../../context/ToastContext";
-
-type ImageSearchResult = {
-  preview: string;
-  dominantColor: string;
-  label: string;
-  queryHint: string;
-};
-
-function readFileAsDataUrl(file: File) {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error("Unable to read file"));
-    reader.readAsDataURL(file);
-  });
-}
-
-function analyzeImageTone(dataUrl: string) {
-  return new Promise<{ dominantColor: string; label: string; queryHint: string }>((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      const size = 48;
-      const ratio = Math.min(size / img.width, size / img.height, 1);
-      canvas.width = Math.max(1, Math.round(img.width * ratio));
-      canvas.height = Math.max(1, Math.round(img.height * ratio));
-
-      const ctx = canvas.getContext("2d", { willReadFrequently: true });
-      if (!ctx) {
-        reject(new Error("Canvas unavailable"));
-        return;
-      }
-
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-      let red = 0;
-      let green = 0;
-      let blue = 0;
-      let count = 0;
-
-      for (let i = 0; i < data.length; i += 4) {
-        const alpha = data[i + 3];
-        if (alpha < 32) {
-          continue;
-        }
-        red += data[i];
-        green += data[i + 1];
-        blue += data[i + 2];
-        count += 1;
-      }
-
-      if (!count) {
-        reject(new Error("No visible pixels found"));
-        return;
-      }
-
-      red = Math.round(red / count);
-      green = Math.round(green / count);
-      blue = Math.round(blue / count);
-
-      const brightness = (red + green + blue) / 3;
-      let label = "style match";
-      let queryHint = "dress";
-
-      if (brightness < 80) {
-        label = "dark fashion";
-        queryHint = "bags";
-      } else if (brightness > 210) {
-        label = "light fashion";
-        queryHint = "shoes";
-      } else if (red > green + 18 && red > blue + 18) {
-        label = "warm tones";
-        queryHint = "dress";
-      } else if (green > red + 12 && green >= blue) {
-        label = "earth tones";
-        queryHint = "two-piece";
-      } else if (blue > red + 12 && blue >= green) {
-        label = "cool tones";
-        queryHint = "dress";
-      }
-
-      resolve({
-        dominantColor: `rgb(${red}, ${green}, ${blue})`,
-        label,
-        queryHint,
-      });
-    };
-
-    img.onerror = () => reject(new Error("Invalid image"));
-    img.src = dataUrl;
-  });
-}
+import { searchCatalogByImage } from "../../lib/imageSearch";
+import { products } from "../../data/products";
 
 export default function Search() {
   const navigate = useNavigate();
@@ -138,14 +47,12 @@ export default function Search() {
     setIsImageScanning(true);
 
     try {
-      const preview = await readFileAsDataUrl(file);
-      const analysis = await analyzeImageTone(preview);
-      const result: ImageSearchResult = {
-        preview,
-        ...analysis,
-      };
-
-      pushToast(`Searching by image for ${analysis.label}.`);
+      const result = await searchCatalogByImage(file, products);
+      pushToast(
+        result.provider === "gemini"
+          ? `Searching by image with Gemini for ${result.label}.`
+          : `Searching by image for ${result.label}.`
+      );
       navigate("/search/results", { state: { imageSearch: result } });
     } catch {
       pushToast("That image could not be scanned. Please try a different one.");
