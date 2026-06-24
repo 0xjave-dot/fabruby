@@ -19,7 +19,7 @@ export interface Product {
 export const products: Product[] = [
   {
     id: "summer-floral-dress",
-    name: "Summer Floral Dress",
+    name: "preview dress",
     description: "A gorgeous, lightweight summer dress crafted from highly breathable organic cotton. Featuring an elegant A-line silhouette, delightful floral prints, and a delicately smocked bodice, it is perfect for styling with strappy sandals on sunny beach strolls or during garden tea parties.",
     price: 36000.00,
     compareAtPrice: 52000.00,
@@ -38,7 +38,7 @@ export const products: Product[] = [
   },
   {
     id: "classic-heels",
-    name: "Classic Leather Stiletto Heels",
+    name: "preview heels",
     description: "Handcrafted from buttery-soft premium calfskin, these timeless stilettos feature a sleek pointed toe, a supportive memory-foam footbed, and a perfectly balanced 3.5-inch heel designed for effortless, comfortable transition from daytime business meetings to evening soirées.",
     price: 58500.00,
     compareAtPrice: 82500.00,
@@ -54,7 +54,7 @@ export const products: Product[] = [
   },
   {
     id: "leather-tote",
-    name: "Premium Saffiano Leather Tote Bag",
+    name: "preview bag",
     description: "Re-imagining a classic silhouette, this spacious tote bag features scratch-resistant Saffiano genuine leather, robust top handles, a secure zippered main compartment, a padded divider pocket designed for a 14-inch laptop, and convenient brass feet.",
     price: 97500.00,
     compareAtPrice: 142500.00,
@@ -70,7 +70,7 @@ export const products: Product[] = [
   },
   {
     id: "white-sneakers",
-    name: "Urban Minimalist Leather Sneakers",
+    name: "preview heels",
     description: "Clean, understated, and versatile sneakers crafted with a premium full-grain leather upper, metal eyelets, detailed marginal stitching, and a durable vulcanized rubber cupsole. Features an antibacterial Ortholite insole for supreme day-long walking convenience.",
     price: 48000.00,
     compareAtPrice: 67500.00,
@@ -86,7 +86,7 @@ export const products: Product[] = [
   },
   {
     id: "lace-slip-dress",
-    name: "Satin Romance Lace Slip Dress",
+    name: "preview dress",
     description: "Crafted from liquid-drape luxurious satin silk, this romantic slip dress is finished with a delicate scalloped Chantilly lace trim along the V-neckline and back cutout. Outfitted with adjustable crossover spaghetti shoulder straps for a custom fit.",
     price: 24300.00,
     compareAtPrice: 27000.00,
@@ -105,7 +105,7 @@ export const products: Product[] = [
   // GROUP 1: Blush Pink (#ff5790)
   {
     id: "dr-001",
-    name: "Blush Lily Silk Maxi Dress",
+    name: "preview dress",
     description: "Cut from luxuriously soft fabric with a flattering silhouette that cinches at all the right places, this versatile dress transitions seamlessly from office sophistication to evening elegance.",
     price: 49500.00,
     category: "",
@@ -119,7 +119,7 @@ export const products: Product[] = [
   },
   {
     id: "dr-014",
-    name: "Rose Petal Wrap Dress",
+    name: "preview dress",
     description: "A gorgeous premium georgette wrap dress with a beautifully fitted waist, playful ruffle details along the hem, and soft bishop sleeves. Ideal for daytime brunches or sunset cocktail hours.",
     price: 36000.00,
     category: "",
@@ -133,7 +133,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-002",
-    name: "Pink Champagne Linen Set",
+    name: "preview two-piece",
     description: "A relaxed-fit modern two-piece made from high-grade French linen. Includes a breezy cropped button-up shirt and matching high-waisted wide-leg trousers for a chic, ready-to-wear look.",
     price: 45000.00,
     category: "",
@@ -147,7 +147,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-009",
-    name: "Blush Breeze Pleated Co-ord",
+    name: "preview two-piece",
     description: "A modern matching set that offers endless styling possibilities, allowing you to wear the pieces together for a polished look or separately to maximize your wardrobe.",
     price: 48000.00,
     category: "",
@@ -161,7 +161,7 @@ export const products: Product[] = [
   },
   {
     id: "dr-021",
-    name: "Pink Dahlia Slip Dress",
+    name: "preview dress",
     description: "An effortless 100% fine cotton slip dress adorned with delicate lace accents along the straps and portrait back. Soft, highly breathable, and styled perfectly with single strap slippers.",
     price: 33000.00,
     category: "",
@@ -175,7 +175,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-015",
-    name: "Blush Knit Crop & Midi Skirt",
+    name: "preview two-piece",
     description: "A premium ultra-soft knit co-ord set. Features a sculpted halter-neck knit tank top and a sleek high-waisted ribbed midi skirt that wonderfully contours your body shape.",
     price: 52000.00,
     category: "",
@@ -191,7 +191,7 @@ export const products: Product[] = [
   // GROUP 2: Sage Green (#7a9b76)
   {
     id: "dr-003",
-    name: "Sage Meadow Midi Dress",
+    name: "preview dress",
     description: "Woven from premium cotton-linen blend in organic sage green. Features a sophisticated sweetheart neckline, a smocked back panel for a perfect bust fit, and tiered flowy skirt.",
     price: 38500.00,
     category: "",
@@ -205,7 +205,7 @@ export const products: Product[] = [
   },
   {
     id: "dr-010",
-    name: "Sage Grace Satin Gown",
+    name: "preview dress",
     description: "An elegant evening dress crafted in heavy sage satin. Boasting a beautiful cowled back cutout and adjustable thin straps, it falls effortlessly to the floor in a sleek A-line design.",
     price: 55000.00,
     category: "",
@@ -219,7 +219,7 @@ export const products: Product[] = [
   },
   {
     id: "dr-018",
-    name: "Olive-Sage Tiered Sundress",
+    name: "preview dress",
     description: "Lightweight and fully lined sundress with pretty frilled straps and a delightful three-tiered design that makes summer styling a breezy joy.",
     price: 39000.00,
     category: "",
@@ -233,7 +233,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-004",
-    name: "Sage Linen Button-Up & Shorts Set",
+    name: "preview two-piece",
     description: "A lovely warm-weather matching set. Features a loose-fit button-up short-sleeve shirt with wooden buttons and breezy matching shorts with a comfy elastic waist.",
     price: 42000.00,
     category: "",
@@ -247,7 +247,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-011",
-    name: "Sage Ribbed Lounge Duo",
+    name: "preview two-piece",
     description: "Extremely soft ribbed lounge set including a breathable scoop-neck crop top and matching high-waisted wide-leg lounge trousers designed for elevated home attire.",
     price: 35000.00,
     category: "",
@@ -261,7 +261,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-020",
-    name: "Econyl Sage Knit Co-ord",
+    name: "preview two-piece",
     description: "An eco-friendly knitted set. Includes a luxury wrap front knit cardigan top and a matching knit midi pencil skirt with a back walking slit.",
     price: 49000.00,
     category: "",
@@ -277,7 +277,7 @@ export const products: Product[] = [
   // GROUP 3: Electric Blue (#004cff)
   {
     id: "dr-005",
-    name: "Stellar Blue Drape Dress",
+    name: "preview dress",
     description: "A majestic dress crafted with high-lustre, rich royal blue crepe fabric. Embellished with high elegant neck gathering and stunning asymmetric fluid drapes.",
     price: 41000.00,
     category: "",
@@ -291,7 +291,7 @@ export const products: Product[] = [
   },
   {
     id: "dr-012",
-    name: "Royal Azure Bodycon Dress",
+    name: "preview dress",
     description: "A tailored premium stretch knit bodycon that comfortably hugs curves. Finished with detailed cut-out geometric shoulder straps for a stunning night look.",
     price: 43000.00,
     category: "",
@@ -305,7 +305,7 @@ export const products: Product[] = [
   },
   {
     id: "dr-019",
-    name: "Blue Horizon Maxi Dress",
+    name: "preview dress",
     description: "An elegant evening maxi dress in royal blue chiffon. Detailed with a deep V-neck, delicate flutter cape sleeves, and a beautifully structured pleated waistband.",
     price: 47000.00,
     category: "",
@@ -319,7 +319,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-006",
-    name: "Cobalt Linen Crop & Pants",
+    name: "preview two-piece",
     description: "A beautiful electric blue co-ord. Features a fitted linen tie-front crop bodice styled perfectly with matching wide-leg trousers for a sharp tropical edit.",
     price: 54000.00,
     category: "",
@@ -333,7 +333,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-013",
-    name: "Royal Blue Pleated Lounge Set",
+    name: "preview two-piece",
     description: "Elevated plissé texture lounge top and flare pants set. Soft, luxurious, highly stretchable and completely breathable for beautiful comfort.",
     price: 46000.00,
     category: "",
@@ -347,7 +347,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-022",
-    name: "Electric Sky Casual Duo",
+    name: "preview two-piece",
     description: "A premium knitted matching shorts and tank set in vibrant electric blue. Perfect for travel or a relaxed summer weekend look.",
     price: 39500.00,
     category: "",
@@ -363,7 +363,7 @@ export const products: Product[] = [
   // GROUP 4: Midnight Black (#202020)
   {
     id: "dr-002",
-    name: "Midnight Silk Slip Dress",
+    name: "preview dress",
     description: "Luxurious pure mulberry silk slip dress with a polished bias cut that flows like water. Featuring thin straps and a classic cowl neck.",
     price: 42000.00,
     category: "",
@@ -377,7 +377,7 @@ export const products: Product[] = [
   },
   {
     id: "dr-015",
-    name: "Obsidian Evening Lace Gown",
+    name: "preview dress",
     description: "A spectacular black floor-length gown with hand-sewn Chantilly lace accents, structured bodice, and stunning open back profile.",
     price: 64000.00,
     category: "",
@@ -391,7 +391,7 @@ export const products: Product[] = [
   },
   {
     id: "dr-023",
-    name: "Little Black Ribbed Dress",
+    name: "preview dress",
     description: "The ultimate casual knit dress. Structured heavy weight ribbing contouring the waist perfectly for high day-to-night versatility.",
     price: 35000.00,
     category: "",
@@ -405,7 +405,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-007",
-    name: "Sleek Noir Blazer & Shorts",
+    name: "preview two-piece",
     description: "A sophisticated black tailored set. Includes an asymmetric double-breasted structured blazer and high waisted tailored matching shorts.",
     price: 58000.00,
     category: "",
@@ -419,7 +419,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-012",
-    name: "Midnight Pleated Satin Set",
+    name: "preview two-piece",
     description: "Timeless plissé lounge shirt and wide pants co-ord in rich jet black. High luxury shine fabric that is incredibly comfortable.",
     price: 51200.00,
     category: "",
@@ -433,7 +433,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-017",
-    name: "Dark Horizon Knit Co-ord",
+    name: "preview two-piece",
     description: "Cozy knit matching top and skirt duo crafted from fine wool blend. Sophisticated and minimalist look for colder months.",
     price: 47000.00,
     category: "",
@@ -449,7 +449,7 @@ export const products: Product[] = [
   // GROUP 5: Sunflower Yellow (#ffd54f)
   {
     id: "dr-004",
-    name: "Sunshine Cotton Sundress",
+    name: "preview dress",
     description: "Breezy bright yellow cotton sundress with delicate self-tie shoulder bows, fully lined and featuring a pleasant tiered lace skirt.",
     price: 36000.00,
     category: "",
@@ -463,7 +463,7 @@ export const products: Product[] = [
   },
   {
     id: "dr-011",
-    name: "Marigold Meadow Tiered Dress",
+    name: "preview dress",
     description: "A gorgeous warm marigold yellow tiered dress crafted in premium linen with a smocked chest panel and short volume sleeves.",
     price: 39500.00,
     category: "",
@@ -477,7 +477,7 @@ export const products: Product[] = [
   },
   {
     id: "dr-022",
-    name: "Yellow Dahlia Silk Slip",
+    name: "preview dress",
     description: "Ultra-fine liquid silk slip dress in deep golden yellow. Detailed with beautiful lace insertions and adjustable criss-cross back.",
     price: 44000.00,
     category: "",
@@ -491,7 +491,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-003",
-    name: "Sunflower Linen Top & Shorts",
+    name: "preview two-piece",
     description: "Bright yellow premium natural linen matching set. Consists of a relaxed halter crop top and breathable high rise paperbag shorts.",
     price: 38000.00,
     category: "",
@@ -505,7 +505,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-014",
-    name: "Golden Ray Pleated Lounge-wear",
+    name: "preview two-piece",
     description: "Stretchy plissé shirt and lounge wide pants in sun yellow. Beautifully textured and designed for effortless premium styling.",
     price: 45000.00,
     category: "",
@@ -519,7 +519,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-019",
-    name: "Sunflower Crochet Duo",
+    name: "preview two-piece",
     description: "Exquisite hand-crocheted summer set including a square-neck knitted tank crop and matching drawstring skirt with lining.",
     price: 49000.00,
     category: "",
@@ -535,7 +535,7 @@ export const products: Product[] = [
   // GROUP 6: Coral Red (#ff5252)
   {
     id: "dr-006",
-    name: "Coral Hibiscus Flare Dress",
+    name: "preview dress",
     description: "Stunning vibrant coral-red dress featuring an elegant flared A-line skirt, delicate scoop neckline, and detailed buttoned back closure.",
     price: 42000.00,
     category: "",
@@ -549,7 +549,7 @@ export const products: Product[] = [
   },
   {
     id: "dr-013",
-    name: "Scarlet Rose Cocktail Dress",
+    name: "preview dress",
     description: "Sensational cocktail dress in scarlet coral-red georgette. Boasting gorgeous hand-pleated shoulder detailing and a structured wrapped bodice.",
     price: 52000.00,
     category: "",
@@ -563,7 +563,7 @@ export const products: Product[] = [
   },
   {
     id: "dr-025",
-    name: "Sunset Satin Slip Dress",
+    name: "preview dress",
     description: "A gorgeous liquid red-coral satin slip dress with a lovely drape neck and low scoop back with tie string details.",
     price: 38500.00,
     category: "",
@@ -577,7 +577,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-008",
-    name: "Crimson Linen Crop & Wide Pants",
+    name: "preview two-piece",
     description: "Matching coral red French linen crop tank with pretty button details and paired with high waisted wide-leg flowing trousers.",
     price: 48000.00,
     category: "",
@@ -591,7 +591,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-016",
-    name: "Coral Sand Knit Co-ord",
+    name: "preview two-piece",
     description: "Supremely cozy cotton-knit crop top and matching high-slit skirt, featuring luxury rib texture and breathable organic yarns.",
     price: 46000.00,
     category: "",
@@ -605,7 +605,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-021",
-    name: "Lava Pleated Silk Ensemble",
+    name: "preview two-piece",
     description: "Exquisite pleated soft silk long-sleeved tunic shirt and matching flare pants. Flows so beautifully when walking.",
     price: 55000.00,
     category: "",
@@ -621,7 +621,7 @@ export const products: Product[] = [
   // GROUP 7: Soft Lilac (#ba68c8)
   {
     id: "dr-007",
-    name: "Lilac Lavender Ruffle Dress",
+    name: "preview dress",
     description: "A dreamy georgette dress in soft lilac with tiered ruffles down the skirt, short puffed elasticated sleeves, and beautiful square neckline.",
     price: 39000.00,
     category: "",
@@ -635,7 +635,7 @@ export const products: Product[] = [
   },
   {
     id: "dr-016",
-    name: "Amethyst Evening Wrap Gown",
+    name: "preview dress",
     description: "Breathtaking premium lilac silk wrap dress. Boasting elegant kimono sleeves and a broad self-tie sash that makes an impressive bow.",
     price: 58000.00,
     category: "",
@@ -649,7 +649,7 @@ export const products: Product[] = [
   },
   {
     id: "dr-024",
-    name: "Lilac Bouquet Silk Slip",
+    name: "preview dress",
     description: "A sleek soft-lilac fine slip dress with comfortable fluid tailoring, beautiful lace neckline details, and adjustable straps.",
     price: 37000.00,
     category: "",
@@ -663,7 +663,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-001",
-    name: "Lilac Spring Crop & Trousers",
+    name: "preview two-piece",
     description: "A gorgeous modern co-ord in elegant soft lilac linen. Includes a tailored sleeveless high-neck top and matched high-waisted trousers.",
     price: 46500.00,
     category: "",
@@ -677,7 +677,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-010",
-    name: "Lavender Fields Knit Co-ord",
+    name: "preview two-piece",
     description: "A highly soft premium ribbed knit set. Composed of an off-the-shoulder wide-rib long-sleeve crop top and matching knit skirts.",
     price: 49000.00,
     category: "",
@@ -691,7 +691,7 @@ export const products: Product[] = [
   },
   {
     id: "tp-018",
-    name: "Wisteria Pleated Duo",
+    name: "preview two-piece",
     description: "Luxurious, beautifully flowing plissé set in rich lilac. Relaxed fit shirt paired with pleated wide flare trousers.",
     price: 52000.00,
     category: "",
@@ -707,10 +707,10 @@ export const products: Product[] = [
 
 // Let's ensure each category has exactly 70 items of high quality
 
-const dressImage = "https://i.ibb.co/v4wtf5xz/Gemini-Generated-Image-feshjfeshjfeshjf.png";
+const dressImage = "https://dexstitches.com/image/cache/catalog/2024%20October/14TH/200/New%20Women%20Lace%20Dress%20Pink%20online%20shopping%20website%201-1080x1440.jpg";
 const twoPieceImage = "https://i.ibb.co/spTH6FJN/Gemini-Generated-Image-jn0hxojn0hxojn0h.png";
-const shoesImage = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRGtdgsmgrxpXW1GH6MdZvzywzE7ORVJP-qgaajzSkIUfPBa2HS_IWSSLc&s=10";
-const bagsImage = "https://static.thenounproject.com/png/2229920-200.png";
+const shoesImage = "https://m.media-amazon.com/images/I/61C3dJuLiQL._AC_UF894,1000_QL80_.jpg";
+const bagsImage = "https://d21d281c1yd2en.cloudfront.net/media/product_images/6085a837-778d-4e08-9862-12f68a32ba09.jpeg";
 
 // Mutate product images to match the new image assets specified by the user
 products.forEach((p) => {
@@ -742,7 +742,7 @@ fillTo70(
   (p) => p.subType === "dress",
   (i) => ({
     id: `dress-gen-${i}`,
-    name: `Elegant Evening Dress ${i}`,
+    name: "preview dress",
     description: `An exquisite Evening Dress meticulously designed for stunning appeal and refined comfort. Hand-crafted seams, premium materials, and structured draping make it an unparalleled silhouette.`,
     price: 35000.00 + (i * 250) % 15000,
     compareAtPrice: 50000.00 + (i * 250) % 15000,
@@ -763,7 +763,7 @@ fillTo70(
   (p) => p.subType === "two-piece",
   (i) => ({
     id: `two-piece-gen-${i}`,
-    name: `Chic Silhouette Two-Piece ${i}`,
+    name: "preview two-piece",
     description: `A stunning styled set consisting of perfectly coordinated top and trousers. Tailored from highly luxurious, breathable fabrics to ensure effortless comfort and impeccable panache.`,
     price: 42000.00 + (i * 310) % 18000,
     compareAtPrice: 58000.00 + (i * 310) % 18000,
@@ -784,7 +784,7 @@ fillTo70(
   (p) => p.category === "shoes",
   (i) => ({
     id: `shoes-gen-${i}`,
-    name: `Premium Leather Shoe ${i}`,
+    name: "preview heels",
     description: `Designed with a chic block heel and cushioned insole, these stunning pumps deliver sky-high style without sacrificing all-day comfort.`,
     price: 28000.00 + (i * 450) % 12000,
     compareAtPrice: 39000.00 + (i * 450) % 12000,
@@ -804,7 +804,7 @@ fillTo70(
   (p) => p.category === "bags",
   (i) => ({
     id: `handbags-gen-${i}`,
-    name: `Signature Evening Bag ${i}`,
+    name: "preview bag",
     description: `Crafted from premium pebbled leather with gold-tone hardware, this spacious yet structured handbag is the perfect finishing touch for any outfit.`,
     price: 49000.00 + (i * 520) % 25000,
     compareAtPrice: 65000.00 + (i * 520) % 25000,
