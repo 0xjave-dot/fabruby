@@ -29,35 +29,24 @@ export default function Checkout() {
 
   const defaultAddress = account.shippingAddresses.items.find((address) => address.isDefault) ?? account.shippingAddresses.items[0];
   const isGuest = !firebaseUser;
+  const shareBagUrl = useMemo(
+    () => `${window.location.origin}/checkout?share=1&bag=${encodeSharedBag(items, checkoutMode)}`,
+    [checkoutMode, items]
+  );
   const bagShareText = useMemo(() => {
     const itemSummary = items
       .map((item) => `${item.qty}x ${item.name}`)
       .join(", ");
 
-    const checkoutLabel = checkoutMode === "gift" ? "gift checkout" : "self checkout";
-    const recipientLine = checkoutMode === "gift" && giftRecipientName.trim()
-      ? `Recipient: ${giftRecipientName.trim()}.`
-      : "";
-    const messageLine = checkoutMode === "gift" && giftMessage.trim()
-      ? `Note: ${giftMessage.trim()}`
-      : "";
-
     return [
-      `I’ve put together a Fabruby bag for ${checkoutLabel}.`,
+      `I’ve put together a Fabruby bag for ${checkoutMode === "gift" ? "gift checkout" : "self checkout"}.`,
       itemSummary ? `Items: ${itemSummary}.` : "Items: see the cart.",
       `Total: ${currencySymbol}${total.toFixed(2)}.`,
-      recipientLine,
-      messageLine,
-      `Open this link to review and pay: ${window.location.origin}/checkout?share=1&bag=${encodeSharedBag({
-        items,
-        checkoutMode,
-        giftRecipientName: giftRecipientName.trim(),
-        giftMessage: giftMessage.trim(),
-      })}`,
+      `Open this link to review and pay: ${shareBagUrl}`,
     ]
       .filter(Boolean)
       .join(" ");
-  }, [checkoutMode, currencySymbol, giftMessage, giftRecipientName, items, total]);
+  }, [checkoutMode, currencySymbol, items, shareBagUrl, total]);
 
   useEffect(() => {
     if (!sharedBagPayload?.items?.length) {
@@ -128,12 +117,7 @@ export default function Checkout() {
         await navigator.share({
           title: "Fabruby bag",
           text,
-          url: `${window.location.origin}/checkout?share=1&bag=${encodeSharedBag({
-            items,
-            checkoutMode,
-            giftRecipientName: giftRecipientName.trim(),
-            giftMessage: giftMessage.trim(),
-          })}`,
+          url: shareBagUrl,
         });
         setSharedWithLovedOne(true);
         return;
