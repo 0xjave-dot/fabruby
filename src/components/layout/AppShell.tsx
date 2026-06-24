@@ -69,7 +69,7 @@ export function AppShell({ children }: AppShellProps) {
     <div className="min-h-screen w-full font-sans antialiased text-[#202020]" style={shellStyle}>
       <div className="relative w-full min-h-screen mx-auto bg-white flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.03)] border-x-0 transition-all md:max-w-[1440px] md:min-h-[calc(100vh-24px)] md:my-3 md:rounded-[30px] md:overflow-hidden md:border md:border-black/5">
         <div
-          className="fixed inset-x-0 top-0 z-[120] flex h-11 items-center justify-between gap-3 border-b border-black/5 px-4 sm:px-6 py-2.5 md:static md:h-auto md:z-auto md:py-3"
+          className="fixed inset-x-0 top-0 z-[120] flex h-10 items-center justify-between gap-3 border-b border-black/5 px-4 sm:px-6 py-2 md:static md:h-auto md:z-auto md:py-3"
           style={{
             background: `linear-gradient(135deg, ${theme.accentLighter} 0%, #ffffff 72%)`,
           }}
@@ -94,7 +94,7 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         </div>
 
-        <div className="h-11 shrink-0 md:hidden" aria-hidden="true" />
+        <div className="h-10 shrink-0 md:hidden" aria-hidden="true" />
 
         {/* Desktop/Tablet Header Navigation Bar */}
         <header className="hidden md:flex items-center justify-between px-6 lg:px-8 py-4 border-b border-[#e5e5e5] bg-white/95 backdrop-blur-xl sticky top-0 z-50 select-none">

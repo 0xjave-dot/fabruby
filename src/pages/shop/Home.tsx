@@ -65,15 +65,15 @@ export default function Home() {
   return (
     <div className="flex-1 flex flex-col bg-white animate-fade-up-enter pb-10">
       {/* Top Header Section */}
-      <div className="sticky top-11 z-[110] flex md:hidden shrink-0 items-center gap-2.5 px-4 sm:px-5 py-2.5 bg-white/90 backdrop-blur-xl border-b border-[#e5e5e5] shadow-[0_4px_18px_rgba(0,0,0,0.04)]">
-        <div className="flex items-center gap-1.5 flex-1 select-none">
+      <div className="sticky top-0 z-[110] flex md:hidden shrink-0 items-center gap-2 px-4 sm:px-5 h-10 bg-white/90 backdrop-blur-xl border-b border-[#e5e5e5] shadow-[0_4px_18px_rgba(0,0,0,0.04)]">
+        <div className="flex items-center gap-1.5 flex-1 min-w-0 select-none">
           <img
             src="https://i.ibb.co/G4BYJN9h/Gemini-Generated-Image-j1yadkj1yadkj1ya-removebg-preview.png"
             alt="Fabruby logo"
-            className="w-7 h-7 object-contain"
+            className="w-6 h-6 object-contain"
             referrerPolicy="no-referrer"
           />
-          <h1 className="font-display font-black text-[22px] tracking-tight text-dark uppercase">
+          <h1 className="font-display font-black text-[18px] tracking-tight text-dark uppercase leading-none">
             Fabruby
           </h1>
         </div>
@@ -81,11 +81,11 @@ export default function Home() {
         {/* Real Cart Badge with bounce */}
         <div
           onClick={() => navigate("/cart")}
-          className="relative cursor-pointer w-8 h-8 flex items-center justify-center bg-gray rounded-full hover:bg-gray3/30"
+          className="relative cursor-pointer w-7.5 h-7.5 flex items-center justify-center bg-gray rounded-full hover:bg-gray3/30"
         >
-          <ShoppingBag className="w-5 h-5 text-dark" strokeWidth={2} />
+          <ShoppingBag className="w-4.5 h-4.5 text-dark" strokeWidth={2} />
           {itemCount > 0 && (
-            <div className="absolute -top-1 -right-1 bg-red text-white text-[9px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center border border-white animate-bounce">
+            <div className="absolute -top-1 -right-1 bg-red text-white text-[8px] font-extrabold w-3.5 h-3.5 rounded-full flex items-center justify-center border border-white animate-bounce">
               {itemCount}
             </div>
           )}
@@ -99,7 +99,7 @@ export default function Home() {
         </ScrollReveal>
 
         {/* Today's Color Daily Drop Section */}
-        <div className="sticky top-[3.75rem] z-[100] -mx-4 sm:-mx-5 px-4 sm:px-5 py-3 bg-white/92 backdrop-blur-xl border-b border-[#e5e5e5] md:static md:mx-0 md:px-0 md:py-0 md:bg-transparent md:backdrop-blur-0 md:border-0">
+        <div className="sticky top-10 z-[100] -mx-4 sm:-mx-5 px-4 sm:px-5 py-3 bg-white/92 backdrop-blur-xl border-b border-[#e5e5e5] md:static md:mx-0 md:px-0 md:py-0 md:bg-transparent md:backdrop-blur-0 md:border-0">
           <ScrollReveal delay={0.05}>
             <TodayColorSection />
           </ScrollReveal>
