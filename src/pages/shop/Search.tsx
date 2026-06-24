@@ -1,16 +1,111 @@
-import { useState } from "react";
-import type { FormEvent } from "react";
+import { useRef, useState } from "react";
+import type { FormEvent, ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search as SearchIcon, Clock, Camera } from "lucide-react";
 import { BackButton } from "../../components/layout/BackButton";
 import { useToast } from "../../context/ToastContext";
 
+type ImageSearchResult = {
+  preview: string;
+  dominantColor: string;
+  label: string;
+  queryHint: string;
+};
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("Unable to read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function analyzeImageTone(dataUrl: string) {
+  return new Promise<{ dominantColor: string; label: string; queryHint: string }>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const size = 48;
+      const ratio = Math.min(size / img.width, size / img.height, 1);
+      canvas.width = Math.max(1, Math.round(img.width * ratio));
+      canvas.height = Math.max(1, Math.round(img.height * ratio));
+
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (!ctx) {
+        reject(new Error("Canvas unavailable"));
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      let red = 0;
+      let green = 0;
+      let blue = 0;
+      let count = 0;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const alpha = data[i + 3];
+        if (alpha < 32) {
+          continue;
+        }
+        red += data[i];
+        green += data[i + 1];
+        blue += data[i + 2];
+        count += 1;
+      }
+
+      if (!count) {
+        reject(new Error("No visible pixels found"));
+        return;
+      }
+
+      red = Math.round(red / count);
+      green = Math.round(green / count);
+      blue = Math.round(blue / count);
+
+      const brightness = (red + green + blue) / 3;
+      let label = "style match";
+      let queryHint = "dress";
+
+      if (brightness < 80) {
+        label = "dark fashion";
+        queryHint = "bags";
+      } else if (brightness > 210) {
+        label = "light fashion";
+        queryHint = "shoes";
+      } else if (red > green + 18 && red > blue + 18) {
+        label = "warm tones";
+        queryHint = "dress";
+      } else if (green > red + 12 && green >= blue) {
+        label = "earth tones";
+        queryHint = "two-piece";
+      } else if (blue > red + 12 && blue >= green) {
+        label = "cool tones";
+        queryHint = "dress";
+      }
+
+      resolve({
+        dominantColor: `rgb(${red}, ${green}, ${blue})`,
+        label,
+        queryHint,
+      });
+    };
+
+    img.onerror = () => reject(new Error("Invalid image"));
+    img.src = dataUrl;
+  });
+}
+
 export default function Search() {
   const navigate = useNavigate();
   const { pushToast } = useToast();
   const [query, setQuery] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isImageScanning, setIsImageScanning] = useState(false);
 
-  const recentSearches = ["Summer dress", "Sneakers white", "Handbag leather"];
+  const recentSearches = ["Summer dress", "Handbag leather"];
   const trendingTags = ["Dresses", "Two-Pieces", "Shoes", "Bags", "Sale"];
 
   const handleSearchSubmit = (e: FormEvent) => {
@@ -24,10 +119,39 @@ export default function Search() {
   };
 
   const handleCameraClick = () => {
-    pushToast("Image search preview opened.");
-    setTimeout(() => {
-      navigate("/search/results?q=dress");
-    }, 1000);
+    fileInputRef.current?.click();
+  };
+
+  const handleImagePick = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      pushToast("Please choose an image file.");
+      return;
+    }
+
+    setIsImageScanning(true);
+
+    try {
+      const preview = await readFileAsDataUrl(file);
+      const analysis = await analyzeImageTone(preview);
+      const result: ImageSearchResult = {
+        preview,
+        ...analysis,
+      };
+
+      pushToast(`Searching by image for ${analysis.label}.`);
+      navigate("/search/results", { state: { imageSearch: result } });
+    } catch {
+      pushToast("That image could not be scanned. Please try a different one.");
+    } finally {
+      setIsImageScanning(false);
+    }
   };
 
   return (
@@ -100,18 +224,33 @@ export default function Search() {
           </h3>
           <button
             onClick={handleCameraClick}
-            className="w-full border-2 border-dashed border-gray3 rounded-[24px] p-6 text-center cursor-pointer hover:border-blue hover:bg-blue-light/10 transition-colors group flex flex-col items-center justify-center select-none"
+            disabled={isImageScanning}
+            className="w-full border-2 border-dashed border-gray3 rounded-[24px] p-6 text-center cursor-pointer hover:border-blue hover:bg-blue-light/10 transition-colors group flex flex-col items-center justify-center select-none disabled:cursor-progress disabled:opacity-75"
           >
             <div className="w-14 h-14 rounded-full bg-blue-light flex items-center justify-center mb-3 text-2xl group-hover:scale-110 transition-transform">
-              <Camera className="w-6 h-6 text-blue" />
+              {isImageScanning ? (
+                <div className="w-6 h-6 rounded-full border-[3px] border-blue border-t-transparent animate-spin" />
+              ) : (
+                <Camera className="w-6 h-6 text-blue" />
+              )}
             </div>
-            <p className="font-display font-semibold text-[14.5px] text-dark">Upload a photo</p>
+            <p className="font-display font-semibold text-[14.5px] text-dark">
+              {isImageScanning ? "Scanning photo..." : "Upload a photo"}
+            </p>
             <p className="font-sans text-xs text-gray2 mt-1">
               Preview matching garments from the catalog.
             </p>
           </button>
         </div>
       </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleImagePick}
+      />
     </div>
   );
 }

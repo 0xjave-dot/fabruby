@@ -4,7 +4,7 @@ import { BottomNav } from "./BottomNav";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../lib/auth";
 import { recordVisit } from "../../lib/adminAnalytics";
-import { ArrowRight, Search } from "lucide-react";
+import { ArrowRight, Search, ShoppingBag } from "lucide-react";
 import { buildDailyTheme, rgbaFromHex } from "../../lib/colorTheme";
 import { getTodaysColorEntry } from "../../data/colorOfTheDay";
 import { WhatsAppFloatingButton } from "../common/WhatsAppFloatingButton";
@@ -144,6 +144,27 @@ export function AppShell({ children }: AppShellProps) {
           <div className="md:hidden">
             <BottomNav />
           </div>
+        )}
+
+        {itemCount > 0 && (
+          <button
+            onClick={() => navigate("/cart")}
+            aria-label="Open bag"
+            title="Open bag"
+            className="fixed left-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:bottom-6 z-[109] group"
+          >
+            <span
+              aria-hidden="true"
+              className="absolute inset-0 rounded-full bg-blue/20 blur-md opacity-80 animate-pulse"
+            />
+            <span className="absolute inset-0 rounded-full border border-blue/20" aria-hidden="true" />
+            <span className="relative flex h-[4.25rem] w-[4.25rem] items-center justify-center rounded-full bg-gradient-to-br from-blue to-blue/80 shadow-[0_14px_30px_rgba(0,76,255,0.28)] transition-transform duration-200 animate-[bounce_1.35s_ease-in-out_infinite] group-hover:scale-105">
+              <ShoppingBag className="h-8 w-8 text-white" strokeWidth={2.1} />
+              <span className="absolute -top-1.5 -right-1.5 min-w-[1.35rem] rounded-full bg-red px-1.5 py-0.5 text-[10px] font-extrabold leading-none text-white shadow-[0_4px_10px_rgba(248,17,64,0.28)]">
+                {itemCount}
+              </span>
+            </span>
+          </button>
         )}
 
         <WhatsAppFloatingButton />

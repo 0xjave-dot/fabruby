@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { SlidersHorizontal, Search } from "lucide-react";
 import { BackButton } from "../../components/layout/BackButton";
 import { ProductCard } from "../../components/common/ProductCard";
@@ -7,11 +7,60 @@ import { EmptyState } from "../../components/common/EmptyState";
 import { FilterSheet, FilterState } from "../../components/common/FilterSheet";
 import { products } from "../../data/products";
 
+type ImageSearchState = {
+  preview: string;
+  dominantColor: string;
+  label: string;
+  queryHint: string;
+};
+
+function parseRgb(rgb: string) {
+  const match = rgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/i);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    r: Number(match[1]),
+    g: Number(match[2]),
+    b: Number(match[3]),
+  };
+}
+
+function hexToRgb(hex: string) {
+  const normalized = hex.replace("#", "");
+  if (normalized.length !== 6) {
+    return null;
+  }
+
+  const value = Number.parseInt(normalized, 16);
+  if (Number.isNaN(value)) {
+    return null;
+  }
+
+  return {
+    r: (value >> 16) & 255,
+    g: (value >> 8) & 255,
+    b: value & 255,
+  };
+}
+
+function colorDistance(a: { r: number; g: number; b: number }, b: { r: number; g: number; b: number }) {
+  return Math.sqrt(
+    (a.r - b.r) * (a.r - b.r) +
+      (a.g - b.g) * (a.g - b.g) +
+      (a.b - b.b) * (a.b - b.b)
+  );
+}
+
 export default function SearchResults() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const rawQuery = searchParams.get("q") || "";
   const query = rawQuery.trim().toLowerCase();
+  const imageSearch = (location.state as { imageSearch?: ImageSearchState } | null)?.imageSearch ?? null;
+  const imageSearchColor = imageSearch ? parseRgb(imageSearch.dominantColor) : null;
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [quickFilter, setQuickFilter] = useState("all");
@@ -26,7 +75,20 @@ export default function SearchResults() {
   const filteredProducts = useMemo(() => {
     let list = [...products];
 
-    if (query) {
+    if (imageSearchColor) {
+      list = list
+        .map((product) => {
+          const primaryColor = product.colorTag || product.colors[0] || "#808080";
+          const productColor = hexToRgb(primaryColor) ?? { r: 128, g: 128, b: 128 };
+
+          return {
+            product,
+            score: colorDistance(imageSearchColor, productColor),
+          };
+        })
+        .sort((a, b) => a.score - b.score)
+        .map(({ product }) => product);
+    } else if (query) {
       list = list.filter(
         (p) =>
           p.name.toLowerCase().includes(query) ||
@@ -63,12 +125,12 @@ export default function SearchResults() {
       list.sort((a, b) => b.price - a.price);
     } else if (filters.sortBy === "newest") {
       list.sort((a, b) => (b.tags?.includes("New") ? 1 : 0) - (a.tags?.includes("New") ? 1 : 0));
-    } else {
+    } else if (!imageSearchColor) {
       list.sort((a, b) => b.rating - a.rating);
     }
 
     return list;
-  }, [query, quickFilter, filters]);
+  }, [imageSearchColor, query, quickFilter, filters]);
 
   const quickOptions = ["all", "new", "sale", "popular"];
 
@@ -111,7 +173,10 @@ export default function SearchResults() {
         </div>
 
         <div className="flex justify-between items-center text-xs text-gray2 font-medium px-1">
-          <span>{filteredProducts.length} items found</span>
+          <span>
+            {filteredProducts.length} items found
+            {imageSearch && ` for ${imageSearch.label}`}
+          </span>
           {quickFilter !== "all" && (
             <span
               onClick={() => {
@@ -130,6 +195,25 @@ export default function SearchResults() {
             </span>
           )}
         </div>
+
+        {imageSearch && (
+          <div className="flex items-center gap-3 rounded-[22px] border border-blue/15 bg-blue-light/20 p-3">
+            <img
+              src={imageSearch.preview}
+              alt="Uploaded search"
+              className="h-14 w-14 rounded-[16px] object-cover border border-white shadow-sm"
+            />
+            <div className="min-w-0">
+              <p className="font-display text-[10px] font-bold uppercase tracking-[0.2em] text-blue">
+                Image search
+              </p>
+              <p className="truncate font-display text-[14px] font-semibold text-dark">
+                Matching by visual tone
+              </p>
+              <p className="text-xs text-gray2">Detected {imageSearch.label} from your photo.</p>
+            </div>
+          </div>
+        )}
 
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

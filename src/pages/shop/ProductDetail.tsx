@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Heart, ShoppingBag, Star, Share2, Plus, Minus, X, ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
+import { Heart, ShoppingBag, Star, Share2, Plus, Minus, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BackButton } from "../../components/layout/BackButton";
 import { products } from "../../data/products";
@@ -152,14 +152,6 @@ export default function ProductDetail() {
           {/* Main image gallery card */}
           <div className="w-full md:w-[45%] space-y-3 flex-shrink-0">
             <div className="group relative aspect-[4/5] md:aspect-square bg-gray flex items-center justify-center max-h-[360px] md:max-h-[500px] overflow-hidden border border-black/5 md:rounded-2xl shadow-subtle cursor-zoom-in">
-              <button
-                type="button"
-                onClick={openImageViewer}
-                className="absolute right-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white backdrop-blur-md opacity-90 transition group-hover:opacity-100"
-              >
-                <ZoomIn className="h-3.5 w-3.5" />
-                Product Images
-              </button>
               <img
                 src={activeImage}
                 alt={product.name}

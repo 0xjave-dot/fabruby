@@ -20,6 +20,7 @@ export default function Register() {
   const [dob, setDob] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   if (authLoading) {
     return (
@@ -164,8 +165,8 @@ export default function Register() {
               <span className="mb-1.5 block font-display text-xs font-bold text-dark">Confirm Password</span>
               <div className="relative">
                 <input
-                  className="w-full h-[52px] rounded-[14px] border border-gray3 bg-[#fbfbfb] px-10 pr-4 font-sans text-sm outline-none transition focus:border-blue/30 focus:bg-white"
-                  type="password"
+                  className="w-full h-[52px] rounded-[14px] border border-gray3 bg-[#fbfbfb] px-10 pr-12 font-sans text-sm outline-none transition focus:border-blue/30 focus:bg-white"
+                  type={showConfirmPassword ? "text" : "password"}
                   placeholder="Repeat password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -173,6 +174,14 @@ export default function Register() {
                   autoComplete="new-password"
                 />
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray2" />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray2 transition hover:text-dark"
+                  aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                >
+                  {showConfirmPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                </button>
               </div>
             </label>
 
