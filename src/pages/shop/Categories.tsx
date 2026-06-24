@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Search, Sparkles, ShoppingBag } from "lucide-react";
 import { categories } from "../../data/categories";
@@ -24,8 +24,21 @@ const getCategoryIcon = (slug: string, className: string = "w-5 h-5") => {
 
 export default function Categories() {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
   const specialBg = "#dfe9ff";
   const specialTextClass = getReadableTextClass(specialBg);
+  const filteredCategories = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    if (!normalizedQuery) {
+      return categories;
+    }
+
+    return categories.filter(
+      (category) =>
+        category.name.toLowerCase().includes(normalizedQuery) ||
+        category.slug.toLowerCase().includes(normalizedQuery)
+    );
+  }, [searchQuery]);
 
   return (
     <div className="flex-grow flex flex-col bg-white animate-fade-up-enter pb-10">
@@ -42,9 +55,36 @@ export default function Categories() {
         }
       />
 
+      <div className="md:hidden sticky top-0 z-20 px-4 pt-1 pb-2 bg-white/92 backdrop-blur-xl border-b border-black/5">
+        <div className="relative">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray2" />
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search categories"
+            className="w-full h-11 rounded-full border border-gray3 bg-gray pl-11 pr-4 font-display text-[14px] text-dark outline-none focus:border-blue/20"
+          />
+        </div>
+      </div>
+
+      {searchQuery && (
+        <div className="mx-4 mt-4 flex items-center justify-between gap-3 rounded-[18px] border border-blue/15 bg-blue-light/20 px-4 py-3 md:hidden">
+          <span className="text-xs font-medium text-gray2">
+            Search results for <span className="font-semibold text-dark">"{searchQuery}"</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => setSearchQuery("")}
+            className="text-xs font-bold text-blue hover:underline"
+          >
+            Clear
+          </button>
+        </div>
+      )}
+
       {/* Asymmetric Bento Grid of Categories */}
       <div className="p-5 md:p-6 grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-        {categories.map((cat, idx) => {
+        {filteredCategories.map((cat, idx) => {
           // Asymmetric Bento properties based on index
           const isWide = idx === 0 || idx === 5;
           const isSpecial = idx === 2; // Shoes/Bags highlight style matching index

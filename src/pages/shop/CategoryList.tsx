@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { BackButton } from "../../components/layout/BackButton";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ProductCard } from "../../components/common/ProductCard";
@@ -23,6 +23,7 @@ export default function CategoryList() {
   // States
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [quickFilter, setQuickFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<FilterState>(() => {
     const colCode = searchParams.get("color");
     const parsedColor = colCode ? (colCode.startsWith("#") ? colCode : `#${colCode}`) : "";
@@ -42,6 +43,7 @@ export default function CategoryList() {
   // Filter lists
   const filteredProducts = useMemo(() => {
     let list = products;
+    const normalizedQuery = searchQuery.trim().toLowerCase();
     const activeCat = filters.category !== "all" ? filters.category : slug;
     if (activeCat === "dresses") {
       list = list.filter((p) => p.subType === "dress");
@@ -85,6 +87,16 @@ export default function CategoryList() {
       list = list.filter((p) => p.subType && filters.subTypes.includes(p.subType));
     }
 
+    if (normalizedQuery) {
+      list = list.filter(
+        (p) =>
+          p.name.toLowerCase().includes(normalizedQuery) ||
+          p.category.toLowerCase().includes(normalizedQuery) ||
+          p.subType?.toLowerCase().includes(normalizedQuery) ||
+          p.tags?.some((tag) => tag.toLowerCase().includes(normalizedQuery))
+      );
+    }
+
     // Sorting
     if (filters.sortBy === "price-asc") {
       list.sort((a, b) => a.price - b.price);
@@ -97,7 +109,7 @@ export default function CategoryList() {
     }
 
     return list;
-  }, [slug, quickFilter, filters]);
+  }, [slug, quickFilter, filters, searchQuery]);
 
   if (!category) {
     return (
@@ -126,6 +138,18 @@ export default function CategoryList() {
       />
 
       <div className="flex-grow p-5 space-y-4">
+        <div className="md:hidden sticky top-0 z-20 -mx-5 px-5 pt-1 pb-2 bg-white/92 backdrop-blur-xl border-b border-black/5">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray2" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search this category"
+              className="w-full h-11 rounded-full border border-gray3 bg-gray pl-11 pr-4 font-display text-[14px] text-dark outline-none focus:border-blue/20"
+            />
+          </div>
+        </div>
+
         {/* Quick selection chips */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar py-0.5 select-none">
           {[
@@ -148,6 +172,21 @@ export default function CategoryList() {
             </button>
           ))}
         </div>
+
+        {searchQuery && (
+          <div className="flex items-center justify-between gap-3 rounded-[18px] border border-blue/15 bg-blue-light/20 px-4 py-3">
+            <span className="text-xs font-medium text-gray2">
+              Search results for <span className="font-semibold text-dark">"{searchQuery}"</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="text-xs font-bold text-blue hover:underline"
+            >
+              Clear
+            </button>
+          </div>
+        )}
 
         {/* Count list */}
         <div className="flex justify-between items-center text-xs text-gray2 font-medium px-1">
