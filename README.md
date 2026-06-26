@@ -59,6 +59,19 @@ If you also want hosting:
 
 `firebase deploy --only hosting,firestore,storage`
 
+## Vector image search
+
+The repo now includes a Cloud Functions scaffold for CLIP-based catalog search plus a Firestore vector index:
+
+1. Install dependencies inside the functions workspace:
+   `npm install --prefix functions`
+2. Backfill embeddings for existing products:
+   `npm run embed:catalog`
+3. Deploy functions and the Firestore vector index:
+   `firebase deploy --only functions,firestore:indexes`
+
+The callable function lives in [`functions/src/index.ts`](C:/Users/HP/Desktop/edge/Fab%20-%20Copy/functions/src/index.ts) and the one-time backfill script lives in [`functions/scripts/embed-catalog-products.ts`](C:/Users/HP/Desktop/edge/Fab%20-%20Copy/functions/scripts/embed-catalog-products.ts).
+
 ## Admin claims
 
 To grant the Firestore admin claim required by the catalog panel:

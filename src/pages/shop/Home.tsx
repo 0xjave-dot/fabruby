@@ -119,7 +119,7 @@ export default function Home() {
 
         {/* Categories Circular Quick Hub */}
         <ScrollReveal delay={0.08} className="py-2.5 flex justify-center w-full">
-          <div className="flex w-full max-w-md gap-3 sm:gap-5 overflow-x-auto no-scrollbar pb-1 pr-1 flex-nowrap justify-start">
+          <div className="mx-auto flex w-full max-w-md flex-nowrap justify-center gap-3 overflow-x-auto no-scrollbar pb-1 sm:gap-5">
             {isLoading ? (
               Array.from({ length: 4 }).map((_, idx) => (
                 <div key={idx} className="h-[3.75rem] w-[3.75rem] sm:h-[4.25rem] sm:w-[4.25rem] shrink-0 rounded-[22px] bg-[#f8f8f8] animate-pulse" />

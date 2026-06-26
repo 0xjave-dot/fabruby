@@ -22,6 +22,9 @@ type ImageTone = {
   dominantColor: string;
   label: string;
   queryHint: string;
+  brightness: number;
+  saturation: number;
+  contrast: number;
 };
 
 function readFileAsDataUrl(file: File) {
@@ -116,6 +119,8 @@ async function analyzeImageTone(dataUrl: string): Promise<ImageTone> {
       let red = 0;
       let green = 0;
       let blue = 0;
+      let brightnessSum = 0;
+      let brightnessSqSum = 0;
       let count = 0;
 
       for (let i = 0; i < data.length; i += 4) {
@@ -126,6 +131,9 @@ async function analyzeImageTone(dataUrl: string): Promise<ImageTone> {
         red += data[i];
         green += data[i + 1];
         blue += data[i + 2];
+        const pixelBrightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        brightnessSum += pixelBrightness;
+        brightnessSqSum += pixelBrightness * pixelBrightness;
         count += 1;
       }
 
@@ -139,24 +147,42 @@ async function analyzeImageTone(dataUrl: string): Promise<ImageTone> {
       blue = Math.round(blue / count);
 
       const brightness = (red + green + blue) / 3;
+      const saturation = (() => {
+        const max = Math.max(red, green, blue);
+        const min = Math.min(red, green, blue);
+        if (max === 0) return 0;
+        return ((max - min) / max) * 100;
+      })();
+      const avgBrightness = brightnessSum / count;
+      const variance = Math.max(0, brightnessSqSum / count - avgBrightness * avgBrightness);
+      const contrast = Math.sqrt(variance);
       let label = "style match";
       let queryHint = "dress";
 
-      if (brightness < 80) {
+      if (brightness < 70 && saturation < 20) {
         label = "dark fashion";
         queryHint = "bags";
+      } else if (brightness > 220 && saturation < 18) {
+        label = "light fashion";
+        queryHint = "jewelry";
       } else if (brightness > 210) {
         label = "light fashion";
         queryHint = "shoes";
+      } else if (saturation > 42 && red > green && red > blue) {
+        label = "warm tones";
+        queryHint = "dress";
       } else if (red > green + 18 && red > blue + 18) {
         label = "warm tones";
         queryHint = "dress";
-      } else if (green > red + 12 && green >= blue) {
+      } else if (green > red + 12 && green >= blue && brightness < 185) {
         label = "earth tones";
         queryHint = "two-piece";
       } else if (red > 150 && green > 120 && blue < 140) {
         label = "gold jewelry";
         queryHint = "jewelry";
+      } else if (contrast < 22 && brightness < 140) {
+        label = "structured accessories";
+        queryHint = "bags";
       } else if (blue > red + 12 && blue >= green) {
         label = "cool tones";
         queryHint = "dress";
@@ -166,6 +192,9 @@ async function analyzeImageTone(dataUrl: string): Promise<ImageTone> {
         dominantColor: `rgb(${red}, ${green}, ${blue})`,
         label,
         queryHint,
+        brightness,
+        saturation,
+        contrast,
       });
     };
 
@@ -192,7 +221,27 @@ function rankLocally(tone: ImageTone, catalog: Product[]): ImageSearchMatch[] {
         b: 128,
       };
 
+      const categoryKeywords = [
+        product.subType ?? "",
+        product.category,
+        ...(product.tags ?? []),
+        product.name,
+        product.description.slice(0, 180),
+      ]
+        .join(" ")
+        .toLowerCase();
+
       let score = 100 - colorDistance(imageColor, productColor) / 4.5;
+
+      if (tone.brightness > 215) {
+        score += categoryKeywords.includes("jewelry") ? 16 : 0;
+      } else if (tone.brightness < 80) {
+        score += categoryKeywords.includes("bags") ? 12 : 0;
+      }
+
+      if (tone.saturation > 40 && categoryKeywords.includes("dress")) {
+        score += 10;
+      }
 
       if (tone.queryHint === "dress" && product.subType === "dress") {
         score += 14;
@@ -204,6 +253,21 @@ function rankLocally(tone: ImageTone, catalog: Product[]): ImageSearchMatch[] {
         score += 14;
       } else if (tone.queryHint === "jewelry" && product.category === "jewelry") {
         score += 14;
+      }
+
+      if (
+        tone.queryHint === "jewelry" &&
+        /(necklace|earring|ring|bracelet|pendant|jewelry)/i.test(categoryKeywords)
+      ) {
+        score += 8;
+      }
+
+      if (tone.queryHint === "bags" && /(bag|tote|handbag|purse)/i.test(categoryKeywords)) {
+        score += 8;
+      }
+
+      if (tone.queryHint === "shoes" && /(shoe|heel|sneaker|sandal|pump)/i.test(categoryKeywords)) {
+        score += 8;
       }
 
       if ((product.tags ?? []).some((tag) => tag.toLowerCase().includes("best seller"))) {
@@ -218,6 +282,65 @@ function rankLocally(tone: ImageTone, catalog: Product[]): ImageSearchMatch[] {
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, 12);
+}
+
+function mergeMatches(
+  localMatches: ImageSearchMatch[],
+  geminiMatches: ImageSearchMatch[],
+  tone: ImageTone,
+  catalog: Product[],
+) {
+  const catalogById = new Map(catalog.map((product) => [product.id, product]));
+  const localRank = new Map(localMatches.map((match, index) => [match.productId, { ...match, index }]));
+  const geminiRank = new Map(geminiMatches.map((match, index) => [match.productId, { ...match, index }]));
+
+  const combined = [...new Set([...localRank.keys(), ...geminiRank.keys()])]
+    .map((productId) => {
+      const product = catalogById.get(productId);
+      const local = localRank.get(productId);
+      const gemini = geminiRank.get(productId);
+
+      if (!product) {
+        return null;
+      }
+
+      const localScore = local?.score ?? 0;
+      const geminiScore = gemini?.score ?? 0;
+      const categoryText = [
+        product.category,
+        product.subType ?? "",
+        product.name,
+        ...(product.tags ?? []),
+        product.description.slice(0, 120),
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      let score = Math.round(localScore * 0.7 + geminiScore * 0.3);
+
+      if (tone.queryHint === "jewelry" && /(jewelry|necklace|ring|bracelet|earring)/i.test(categoryText)) {
+        score += 6;
+      } else if (tone.queryHint === "bags" && /(bag|handbag|tote|purse)/i.test(categoryText)) {
+        score += 6;
+      } else if (tone.queryHint === "shoes" && /(shoe|heel|sneaker|sandal|pump)/i.test(categoryText)) {
+        score += 6;
+      } else if (tone.queryHint === "dress" && /(dress|gown|silhouette)/i.test(categoryText)) {
+        score += 6;
+      } else if (tone.queryHint === "two-piece" && /(two-piece|set|co-ord|coord)/i.test(categoryText)) {
+        score += 6;
+      }
+
+      return {
+        productId,
+        score: clampScore(score),
+        reason: gemini?.reason ?? local?.reason ?? "Hybrid image ranking.",
+      };
+    })
+    .filter((match): match is ImageSearchMatch => Boolean(match))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 12);
+
+  return combined;
 }
 
 function normalizeMatches(rawMatches: unknown, catalog: Product[]) {
@@ -272,7 +395,12 @@ function normalizeMatches(rawMatches: unknown, catalog: Product[]) {
   return normalized;
 }
 
-async function rankWithGemini(file: File, dataUrl: string, catalog: Product[]): Promise<ImageSearchResult> {
+async function rankWithGemini(
+  file: File,
+  dataUrl: string,
+  catalog: Product[],
+  tone: ImageTone,
+): Promise<ImageSearchResult> {
   const apiKey = (import.meta.env.GEMINI_API_KEY as string | undefined)?.trim();
   if (!apiKey) {
     throw new Error("Missing Gemini API key");
@@ -294,6 +422,10 @@ async function rankWithGemini(file: File, dataUrl: string, catalog: Product[]): 
     "- Scores must be integers from 0 to 100.",
     "- productId must exactly match a catalog item id.",
     "- Prefer silhouette, color, texture, occasion, and visual style over text keywords.",
+    "- The uploaded image appears closest to: ",
+    `${tone.label} / ${tone.queryHint}`,
+    "- Keep the top results tightly related to the image and avoid generic fashion picks.",
+    "- Jewelry, bags, shoes, dresses, and two-piece sets should only be selected when clearly visually supported.",
     "- Keep reasons concise and specific.",
     "Catalog JSON follows after this prompt.",
   ].join(" ");
@@ -323,7 +455,9 @@ async function rankWithGemini(file: File, dataUrl: string, catalog: Product[]): 
     matches?: unknown;
   };
 
-  const matches = normalizeMatches(candidate.matches, catalog);
+  const localMatches = rankLocally(tone, catalog);
+  const geminiMatches = normalizeMatches(candidate.matches, catalog);
+  const matches = mergeMatches(localMatches, geminiMatches, tone, catalog);
   if (!matches.length) {
     throw new Error("Gemini returned no usable matches");
   }
@@ -354,6 +488,9 @@ async function buildFallbackResult(dataUrl: string, catalog: Product[]): Promise
       dominantColor: "rgb(128, 128, 128)",
       label: "style match",
       queryHint: "style",
+      brightness: 128,
+      saturation: 0,
+      contrast: 0,
     };
   }
 
@@ -371,10 +508,33 @@ async function buildFallbackResult(dataUrl: string, catalog: Product[]): Promise
 
 export async function searchCatalogByImage(file: File, catalog: Product[]): Promise<ImageSearchResult> {
   const dataUrl = await readFileAsDataUrl(file);
+  let tone: ImageTone;
 
   try {
-    return await rankWithGemini(file, dataUrl, catalog);
+    tone = await analyzeImageTone(dataUrl);
   } catch {
-    return buildFallbackResult(dataUrl, catalog);
+    tone = {
+      dominantColor: "rgb(128, 128, 128)",
+      label: "style match",
+      queryHint: "style",
+      brightness: 128,
+      saturation: 0,
+      contrast: 0,
+    };
+  }
+
+  try {
+    return await rankWithGemini(file, dataUrl, catalog, tone);
+  } catch {
+    const matches = rankLocally(tone, catalog);
+
+    return {
+      preview: dataUrl,
+      label: tone.label,
+      summary: "Local visual fallback ranked the catalog by color and style.",
+      queryHint: tone.queryHint,
+      matches,
+      provider: "local-fallback",
+    };
   }
 }
