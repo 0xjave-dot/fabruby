@@ -1070,7 +1070,7 @@ export default function AdminPanel() {
           <InputField label="Name" value={productForm.name} onChange={(value) => setProductField("name", value)} placeholder="Summer Floral Dress" />
           <InputField label="Price" type="number" value={productForm.price} onChange={(value) => setProductField("price", value)} placeholder="36000" />
           <InputField label="Compare-at Price" type="number" value={productForm.compareAtPrice} onChange={(value) => setProductField("compareAtPrice", value)} placeholder="52000" />
-          <InputField label="Category" value={productForm.category} onChange={(value) => setProductField("category", value)} placeholder="shoes or bags" />
+          <InputField label="Category" value={productForm.category} onChange={(value) => setProductField("category", value)} placeholder="shoes, bags, or jewelry" />
           <InputField label="Sub Type" value={productForm.subType} onChange={(value) => setProductField("subType", value)} placeholder="dress or two-piece" />
           <InputField label="Color Tag" value={productForm.colorTag} onChange={(value) => setProductField("colorTag", value)} placeholder="#ff5790" />
           <InputField label="Rating" type="number" value={productForm.rating} onChange={(value) => setProductField("rating", value)} placeholder="4.8" />

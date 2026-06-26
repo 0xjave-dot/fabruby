@@ -7,19 +7,29 @@ import { getReadableTextClass } from "../../lib/colorTheme";
 
 const getCategoryIcon = (slug: string, className: string = "w-5 h-5") => {
   const cat = categories.find((item) => item.slug === slug);
-  if (cat?.image) {
+  if (cat?.iconClass || cat?.image) {
     return (
-      <img
-        src={cat.image}
-        alt={cat.name}
-        className={`${className} object-contain scale-[1.45] sm:scale-[1.55] origin-center select-none pointer-events-none`}
-        loading="eager"
-        referrerPolicy="no-referrer"
-      />
+      <span className={`inline-flex shrink-0 items-center justify-center leading-none ${className}`}>
+        {cat?.iconClass ? (
+          <i aria-hidden="true" className={`${cat.iconClass} block h-full w-full`} />
+        ) : (
+          <img
+            src={cat.image}
+            alt={cat.name}
+            className="block h-full w-full select-none object-contain pointer-events-none"
+            loading="eager"
+            referrerPolicy="no-referrer"
+          />
+        )}
+      </span>
     );
   }
 
-  return <ShoppingBag className={`${className} shrink-0 stroke-[1.9]`} />;
+  return (
+    <span className={`inline-flex shrink-0 items-center justify-center leading-none ${className}`}>
+      <ShoppingBag className="h-full w-full shrink-0 stroke-[1.9]" />
+    </span>
+  );
 };
 
 export default function Categories() {

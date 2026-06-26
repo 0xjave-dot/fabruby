@@ -69,6 +69,23 @@ export const products: Product[] = [
     tags: ["Best Seller", "Everyday"]
   },
   {
+    id: "gold-hoop-earrings",
+    name: "preview jewelry",
+    description: "A polished gold-tone jewelry set designed to add instant elegance, featuring a luminous finish, delicate detailing, and a lightweight feel that works for everyday wear or evening dressing.",
+    price: 22500.00,
+    compareAtPrice: 31500.00,
+    category: "jewelry",
+    images: [
+      "https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=600&q=80"
+    ],
+    colors: ["#d4af37", "#f5f0e6", "#202020"],
+    sizes: ["One Size"],
+    rating: 4.8,
+    reviewCount: 58,
+    colorTag: "#d4af37",
+    tags: ["New Arrival", "Gift Ready"]
+  },
+  {
     id: "white-sneakers",
     name: "preview heels",
     description: "Clean, understated, and versatile sneakers crafted with a premium full-grain leather upper, metal eyelets, detailed marginal stitching, and a durable vulcanized rubber cupsole. Features an antibacterial Ortholite insole for supreme day-long walking convenience.",
@@ -711,6 +728,7 @@ const dressImage = "https://dexstitches.com/image/cache/catalog/2024%20October/1
 const twoPieceImage = "https://i.ibb.co/G3CN15v9/Gemini-Generated-Image-g4v7uyg4v7uyg4v7.png";
 const shoesImage = "https://m.media-amazon.com/images/I/61C3dJuLiQL._AC_UF894,1000_QL80_.jpg";
 const bagsImage = "https://d21d281c1yd2en.cloudfront.net/media/product_images/6085a837-778d-4e08-9862-12f68a32ba09.jpeg";
+const jewelryImage = "https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=600&q=80";
 
 // Mutate product images to match the new image assets specified by the user
 products.forEach((p) => {
@@ -722,6 +740,8 @@ products.forEach((p) => {
     p.images = [shoesImage];
   } else if (p.category === "bags") {
     p.images = [bagsImage];
+  } else if (p.category === "jewelry") {
+    p.images = [jewelryImage];
   }
 });
 
@@ -819,13 +839,34 @@ fillTo70(
   })
 );
 
-// Keep only products that fall strictly under our four approved categories
+// Fill jewelry
+fillTo70(
+  (p) => p.category === "jewelry",
+  (i) => ({
+    id: `jewelry-gen-${i}`,
+    name: "preview jewelry",
+    description: `A radiant jewelry piece with a refined silhouette and luminous finish. Designed to complement occasion looks, polished basics, and elevated everyday styling with ease.`,
+    price: 18000.00 + (i * 380) % 9000,
+    compareAtPrice: 25000.00 + (i * 380) % 9000,
+    category: "jewelry",
+    images: [jewelryImage],
+    colors: ["#d4af37", "#f5f0e6", "#202020"],
+    sizes: ["One Size"],
+    rating: parseFloat((4.6 + (i % 5) * 0.1).toFixed(1)),
+    reviewCount: 12 + (i * 5) % 160,
+    colorTag: "#d4af37",
+    tags: i % 4 === 0 ? ["Gift Ready"] : ["Best Seller"]
+  })
+);
+
+// Keep only products that fall strictly under our five approved categories
 const approvedProducts = products.filter((p) => {
   return (
     p.subType === "dress" ||
     p.subType === "two-piece" ||
     p.category === "shoes" ||
-    p.category === "bags"
+    p.category === "bags" ||
+    p.category === "jewelry"
   );
 });
 

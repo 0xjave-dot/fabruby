@@ -53,6 +53,8 @@ export default function CategoryList() {
       list = list.filter((p) => p.category === "shoes");
     } else if (activeCat === "handbags") {
       list = list.filter((p) => p.category === "bags");
+    } else if (activeCat === "jewelry") {
+      list = list.filter((p) => p.category === "jewelry");
     } else if (activeCat && activeCat !== "all") {
       list = list.filter((p) => p.category === activeCat);
     }
@@ -205,12 +207,12 @@ export default function CategoryList() {
             ))}
           </div>
         ) : (
-          <EmptyState
-            emoji="👗"
-            title="Empty Collection"
-            description="We are currently stitching new inventory for this fashion category. Explore other collections!"
-            actionText="Browse Home"
-            onAction={() => navigate("/")}
+        <EmptyState
+          emoji={category.emoji}
+          title="Empty Collection"
+          description="We are currently stitching new inventory for this fashion category. Explore other collections!"
+          actionText="Browse Home"
+          onAction={() => navigate("/")}
           />
         )}
       </div>

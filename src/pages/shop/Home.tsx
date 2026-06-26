@@ -14,19 +14,29 @@ import { getReadableTextClass } from "../../lib/colorTheme";
 
 const getCategoryIcon = (slug: string, className: string = "w-5 h-5 sm:w-6 sm:h-6") => {
   const cat = categories.find((item) => item.slug === slug);
-  if (cat?.image) {
+  if (cat?.iconClass || cat?.image) {
     return (
-      <img
-        src={cat.image}
-        alt={cat.name}
-        className={`${className} object-contain scale-[1.35] sm:scale-[1.45] origin-center select-none pointer-events-none`}
-        loading="eager"
-        referrerPolicy="no-referrer"
-      />
+      <span className={`inline-flex shrink-0 items-center justify-center leading-none ${className}`}>
+        {cat?.iconClass ? (
+          <i aria-hidden="true" className={`${cat.iconClass} block h-full w-full`} />
+        ) : (
+          <img
+            src={cat.image}
+            alt={cat.name}
+            className="block h-full w-full select-none object-contain pointer-events-none"
+            loading="eager"
+            referrerPolicy="no-referrer"
+          />
+        )}
+      </span>
     );
   }
 
-  return <ShoppingBag className={`${className} shrink-0 stroke-[1.9]`} />;
+  return (
+    <span className={`inline-flex shrink-0 items-center justify-center leading-none ${className}`}>
+      <ShoppingBag className="h-full w-full shrink-0 stroke-[1.9]" />
+    </span>
+  );
 };
 
 export default function Home() {
@@ -58,6 +68,8 @@ export default function Home() {
       return products.filter((p) => p.category === "shoes");
     } else if (activeCategory === "handbags") {
       return products.filter((p) => p.category === "bags");
+    } else if (activeCategory === "jewelry") {
+      return products.filter((p) => p.category === "jewelry");
     }
     return [];
   }, [activeCategory]);
@@ -107,10 +119,10 @@ export default function Home() {
 
         {/* Categories Circular Quick Hub */}
         <ScrollReveal delay={0.08} className="py-2.5 flex justify-center w-full">
-          <div className="grid grid-cols-4 gap-3 sm:gap-5 w-full max-w-md">
+          <div className="flex w-full max-w-md gap-3 sm:gap-5 overflow-x-auto no-scrollbar pb-1 pr-1 flex-nowrap justify-start">
             {isLoading ? (
               Array.from({ length: 4 }).map((_, idx) => (
-                <div key={idx} className="aspect-square rounded-2xl bg-[#f8f8f8] animate-pulse" />
+                <div key={idx} className="h-[3.75rem] w-[3.75rem] sm:h-[4.25rem] sm:w-[4.25rem] shrink-0 rounded-[22px] bg-[#f8f8f8] animate-pulse" />
               ))
             ) : (
               categories.map((cat) => {
@@ -119,7 +131,7 @@ export default function Home() {
                   <div
                     key={cat.id}
                     onClick={() => setActiveCategory(cat.slug)}
-                    className="relative group flex flex-col items-center justify-center cursor-pointer"
+                    className="relative group flex flex-col items-center justify-center cursor-pointer shrink-0"
                   >
                     {/* Floating Elegant Tooltip */}
                     <div className="absolute bottom-full mb-2.5 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-dark text-white text-[10px] font-black uppercase tracking-wider rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg scale-95 group-hover:scale-100 border border-white/10">

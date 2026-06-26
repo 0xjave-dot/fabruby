@@ -42,6 +42,8 @@ export default function AllProducts() {
       list = list.filter((p) => p.category === "shoes");
     } else if (activeCat === "handbags") {
       list = list.filter((p) => p.category === "bags");
+    } else if (activeCat === "jewelry") {
+      list = list.filter((p) => p.category === "jewelry");
     } else if (activeCat && activeCat !== "all") {
       list = list.filter((p) => p.category === activeCat);
     }

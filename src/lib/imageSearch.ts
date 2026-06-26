@@ -154,6 +154,9 @@ async function analyzeImageTone(dataUrl: string): Promise<ImageTone> {
       } else if (green > red + 12 && green >= blue) {
         label = "earth tones";
         queryHint = "two-piece";
+      } else if (red > 150 && green > 120 && blue < 140) {
+        label = "gold jewelry";
+        queryHint = "jewelry";
       } else if (blue > red + 12 && blue >= green) {
         label = "cool tones";
         queryHint = "dress";
@@ -198,6 +201,8 @@ function rankLocally(tone: ImageTone, catalog: Product[]): ImageSearchMatch[] {
       } else if (tone.queryHint === "shoes" && product.category === "shoes") {
         score += 14;
       } else if (tone.queryHint === "bags" && product.category === "bags") {
+        score += 14;
+      } else if (tone.queryHint === "jewelry" && product.category === "jewelry") {
         score += 14;
       }
 
