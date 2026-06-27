@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -20,12 +20,14 @@ import { useAuth } from "../../lib/auth";
 export default function Login() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { pushToast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const returnTo = (location.state as { returnTo?: string } | null)?.returnTo || "/";
 
   if (authLoading) {
     return (
@@ -52,7 +54,7 @@ export default function Login() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       pushToast("Welcome back!");
-      navigate("/");
+      navigate(returnTo, { replace: true });
     } catch (err: unknown) {
       const code = (err as { code?: string }).code;
 
@@ -80,7 +82,7 @@ export default function Login() {
     try {
       await signInWithPopup(auth, googleProvider);
       pushToast("Signed in with Google.");
-      navigate("/");
+      navigate(returnTo, { replace: true });
     } catch (err: unknown) {
       const code = (err as { code?: string }).code;
 

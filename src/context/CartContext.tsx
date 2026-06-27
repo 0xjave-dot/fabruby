@@ -154,6 +154,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const appliedVoucher = activeCart.appliedVoucherCode
     ? vouchers.find((voucher) => voucher.code.toUpperCase() === activeCart.appliedVoucherCode?.toUpperCase()) ?? null
     : null;
+  const updateActiveCart = (next: Partial<UserCartDoc>) => updateCartDoc(activeCart, next);
 
   const persistCart = (next: UserCartDoc) => {
     if (firebaseUser) {
@@ -181,11 +182,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
           )
         : [...items, { ...newItem, qty: qtyToAdd }];
 
-    persistCart(updateCartDoc(cart, { items: nextItems, appliedVoucherCode: cart.appliedVoucherCode }));
+    persistCart(updateActiveCart({ items: nextItems }));
   };
 
-  const replaceCart = (nextItems: CartItem[], appliedVoucherCode: string | null = cart.appliedVoucherCode) => {
-    persistCart(updateCartDoc(cart, { items: nextItems.map((item) => ({ ...item })), appliedVoucherCode }));
+  const replaceCart = (
+    nextItems: CartItem[],
+    appliedVoucherCode: string | null = activeCart.appliedVoucherCode
+  ) => {
+    persistCart(
+      updateActiveCart({
+        items: nextItems.map((item) => ({ ...item })),
+        appliedVoucherCode,
+      })
+    );
   };
 
   const updateQty = (productId: string, size: string, color: string, qty: number) => {
@@ -200,14 +209,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
         : item
     );
 
-    persistCart(updateCartDoc(cart, { items: nextItems }));
+    persistCart(updateActiveCart({ items: nextItems }));
   };
 
   const removeItem = (productId: string, size: string, color: string) => {
     const nextItems = items.filter(
       (item) => !(item.productId === productId && item.size === size && item.color === color)
     );
-    persistCart(updateCartDoc(cart, { items: nextItems }));
+    persistCart(updateActiveCart({ items: nextItems }));
   };
 
   const clearCart = () => {
@@ -217,14 +226,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const applyVoucher = (code: string): boolean => {
     const voucher = vouchers.find((v) => v.code.toUpperCase() === code.trim().toUpperCase());
     if (voucher) {
-      persistCart(updateCartDoc(cart, { appliedVoucherCode: voucher.code }));
+      persistCart(updateActiveCart({ appliedVoucherCode: voucher.code }));
       return true;
     }
     return false;
   };
 
   const removeVoucher = () => {
-    persistCart(updateCartDoc(cart, { appliedVoucherCode: null }));
+    persistCart(updateActiveCart({ appliedVoucherCode: null }));
   };
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);

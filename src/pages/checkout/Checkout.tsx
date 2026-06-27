@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { ShieldCheck, MapPin, ChevronRight, AlertCircle, Gift, User, Send } from "lucide-react";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BackButton } from "../../components/layout/BackButton";
@@ -64,6 +64,7 @@ function renderBagLineItem({
 
 export default function Checkout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { pushToast } = useToast();
   const { currencySymbol, userProfile, account, firebaseUser } = useSettings();
@@ -146,6 +147,14 @@ export default function Checkout() {
         giftRecipientName: giftRecipientName.trim(),
         giftMessage: giftMessage.trim(),
         sharedWithLovedOne,
+      },
+    });
+  };
+
+  const handleSignIn = () => {
+    navigate("/login", {
+      state: {
+        returnTo: `${location.pathname}${location.search}`,
       },
     });
   };
@@ -391,7 +400,13 @@ export default function Checkout() {
                     <User className={`h-4 w-4 ${checkoutMode === "self" ? "text-blue" : "text-gray2"}`} />
                     <span className="font-display text-[13px] font-bold text-dark">For myself</span>
                   </div>
-                  <p className="mt-1 text-[11px] text-gray2">Standard checkout for your own order.</p>
+                  <p
+                    className={`mt-1 text-[11px] ${
+                      checkoutMode === "self" ? "text-[#404040]" : "text-[#5a5a5a]"
+                    }`}
+                  >
+                    Standard checkout for your own order.
+                  </p>
                 </button>
 
                 <button
@@ -407,7 +422,13 @@ export default function Checkout() {
                     <Gift className={`h-4 w-4 ${checkoutMode === "gift" ? "text-blue" : "text-gray2"}`} />
                     <span className="font-display text-[13px] font-bold text-dark">As a gift</span>
                   </div>
-                  <p className="mt-1 text-[11px] text-gray2">Package it for someone special.</p>
+                  <p
+                    className={`mt-1 text-[11px] ${
+                      checkoutMode === "gift" ? "text-[#404040]" : "text-[#5a5a5a]"
+                    }`}
+                  >
+                    Package it for someone special.
+                  </p>
                 </button>
               </div>
 
@@ -492,6 +513,18 @@ export default function Checkout() {
             >
               {isGuest ? "Continue as Guest" : "Complete Order"}
             </button>
+
+            {isGuest && (
+              <div className="text-center -mt-1">
+                <button
+                  type="button"
+                  onClick={handleSignIn}
+                  className="font-display text-[12.5px] font-bold text-blue hover:underline cursor-pointer"
+                >
+                  Or sign in
+                </button>
+              </div>
+            )}
 
             <div className="rounded-[20px] border border-amber-200 bg-amber-50 p-4 text-[12px] text-amber-900 flex gap-3">
               <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />

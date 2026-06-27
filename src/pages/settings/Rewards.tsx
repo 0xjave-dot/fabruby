@@ -34,7 +34,7 @@ export default function Rewards() {
           {/* Intentionally blank */}
           <button
             onClick={() => pushToast("Loyalty rewards will appear once points are earned.")}
-            className="w-full h-[52px] bg-gray hover:bg-gray3/30 rounded-std border border-black/5 font-display font-bold text-blue text-[13px]"
+            className="w-full h-[52px] rounded-std border border-blue bg-blue font-display font-bold text-white text-[13px] shadow-std transition-colors hover:bg-blue/90"
           >
             Learn how to earn points
           </button>
